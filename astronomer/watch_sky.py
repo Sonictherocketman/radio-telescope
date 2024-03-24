@@ -1,4 +1,4 @@
-from datetime import datetime, UTC
+from datetime import datetime
 import logging
 import os
 import shlex
@@ -76,7 +76,7 @@ def take_reading(
     """ Take a reading from the device given the settings provided
     and save those to the a file as a compressed archive.
     """
-    now = datetime.now(UTC)
+    now = datetime.utcnow()
     header = HEADER_TEMPLATE.format(
         frequency=frequency,
         sample_rate=sample_rate,
