@@ -12,7 +12,7 @@ services:
       broker:
         condition: service_healthy
     volumes:
-      - /mnt/encrypted/filestorage:/opt/filestorage
+      - /opt/volumes/filestorage:/opt/filestorage
       - /opt/volumes/staticfiles:/opt/staticfiles
 
   app_backup:
@@ -47,7 +47,7 @@ services:
       broker:
         condition: service_healthy
     volumes:
-      - /mnt/encrypted/filestorage:/opt/filestorage
+      - /opt/volumes/filestorage:/opt/filestorage
       - /opt/volumes/staticfiles:/opt/staticfiles
     command: ./docker-entrypoint.sh
 
@@ -58,7 +58,7 @@ services:
       broker:
         condition: service_healthy
     volumes:
-      - /mnt/encrypted/filestorage:/opt/filestorage
+      - /opt/volumes/filestorage:/opt/filestorage
 
   scheduler:
     build:
@@ -93,13 +93,13 @@ services:
 
   db:
     volumes:
-      - /mnt/encrypted/pgdata:/var/lib/postgresql/data
+      - /opt/volumes/pgdata:/var/lib/postgresql/data
 
   broker:
     ports:
       - '127.0.0.1:15672:15672'
     volumes:
-     - /mnt/encrypted/rabbitmq:/var/lib/rabbitmq
+     - /opt/volumes/rabbitmq:/var/lib/rabbitmq
 
   memcached:
     image: bitnami/memcached:latest

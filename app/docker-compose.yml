@@ -3,7 +3,7 @@ services:
 
   app:
     build:
-      context: ./app
+      context: ./rtshare
     environment:
       - RUN_MODE=app
       - ENVIRONMENT
@@ -28,7 +28,7 @@ services:
 
   worker:
     build:
-      context: ./app
+      context: ./rtshare
     environment:
       - RUN_MODE=worker
       - ENVIRONMENT
