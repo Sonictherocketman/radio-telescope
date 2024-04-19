@@ -10,9 +10,6 @@ MAINTAINER Brian Schrader <brian@brianschrader.com>
 EXPOSE 8000
 WORKDIR app
 
-# Cache static dependencies
-RUN pip install gunicorn && pip install gevent
-
 # Cache requirements
 COPY requirements.txt .
 RUN pip install -r requirements.txt
