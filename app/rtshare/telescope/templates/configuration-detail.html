@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load django_bootstrap5 %}
+
+{% block subtitle %}Configuration {{ configuration.name }} | {% endblock %}
+
+{% block content %}
+<turbo-frame id="content" target="_top">
+  <div class="d-flex align-items-center gap-3 justify-content-between border-bottom mb-3 pb-1">
+    <h1>
+      Configuration
+      <small class="text-muted">| {{ configuration.name }}</small>
+    </h1>
+  </div>
+  <div class="row mb-3">
+    <div class="col-12 col-md-6 col-lg-8 mb-3">
+      <div class="card card-body mb-3">
+        <h5>
+          Observation
+          <small class="text-muted">
+            | {{ configuration.observation.name }}
+          </small>
+        </h5>
+        <div class="border-start ps-2">
+          <div>
+            {{ configuration.observation.start_at|date:"SHORT_DATETIME_FORMAT" }} -
+            {{ configuration.observation.end_at|date:"SHORT_DATETIME_FORMAT" }}
+          </div>
+          <div>
+            {% for telescope in configuration.observation.telescopes.all %}
+              {{ telescope.name }}{% if not forloop.last %},{% endif %}
+            {% empty %}
+              <i class="text-muted">
+                No telescopes configured for this observation
+              </i>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      <form action="{% url 'configuration.update' configuration.id %}" method="post">
+        {% csrf_token %}
+        <fieldset
+          {% if not perms.configuration.change_configuration %}disabled{% endif %}
+          {% if not configuration.observation.is_pending %}disabled{% endif %}
+        >
+          {% bootstrap_form form %}
+        </fieldset>
+        <div class="d-flex justify-content-end">
+          <button
+            class="btn btn-primary"
+            type="submit"
+            {% if not perms.configuration.change_configuration %}disabled{% endif %}
+            {% if not configuration.observation.is_pending %}disabled{% endif %}
+          >
+            <i class="fa fa-save"></i>
+            Save
+          </button>
+        </div>
+      </form>
+    </div>
+    {% if configuration %}
+    <div class="col-12 col-md-6 col-lg-4">
+      <div class="card card-body mb-3">
+        <h3 class="border-bottom pb-1">
+          Actions
+        </h3>
+        <div class="d-flex flex-column gap-2">
+          {% if perms.configuration.view_observation %}
+          <a
+            href="{% url 'observation.update' configuration.observation.id %}"
+            class="btn btn-sm btn-secondary"
+          >
+            <i class="fa fa-calendar-days"></i>
+            Go to Observation
+          </a>
+          {% else %}
+          <button
+            class="btn btn-sm btn-secondary"
+            disabled
+          >
+            <i class="fa fa-calendar-days"></i>
+            Go to Observation
+          </button>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    </div>
+</turbo-frame>
+{% endblock %}
+
+{% block morescript %}
+<script>
+  function setCurrentLocation() {
+    navigator.geolocation.getCurrentPosition(position => {
+      const { latitude, longitude } = position.coords;
+      $('input[name="latitude"]').val(latitude);
+      $('input[name="longitude"]').val(longitude);
+    });
+  }
+</script>
+{% endblock %}

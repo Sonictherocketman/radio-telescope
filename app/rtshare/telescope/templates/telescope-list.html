@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<turbo-frame id="content" target="_top">
+  <h1>
+    All Telescopes
+  </h1>
+  <p>
+    {% lorem %}
+  </p>
+  {% for telescope in object_list %}
+  <div class="card card-body mb-2 position-relative">
+    <h2>
+      {{ telescope.name }}
+    </h2>
+    <div class="my-1">
+       {{ telescope.get_status_display }}, {{ telescope.get_state_display }}
+    </div>
+    <a class="stretched-link" href="{% url 'telescope.update' telescope.id %}"></a>
+  </div>
+  {% empty %}
+
+
+  {% endfor %}
+</turbo-frame>
+{% endblock %}

@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load django_bootstrap5 %}
+
+{% block subtitle %}Observation {{ observation.name }} | {% endblock %}
+
+{% block content %}
+<turbo-frame id="content" target="_top">
+  <div class="d-flex align-items-center gap-3 justify-content-between border-bottom mb-3 pb-1">
+    <h1>
+      Observation
+      <small class="text-muted">| {{ observation.name }}</small>
+    </h1>
+    <div>
+      <span
+        class="
+          badge
+          {% if observation.is_in_progress %}
+            bg-info
+          {% elif observation.is_complete %}
+            bg-success
+          {% else %}
+            bg-secondary
+          {% endif %}
+        "
+      >
+        {% if observation.is_in_progress %}
+          In Progress
+        {% elif observation.is_complete %}
+          Complete
+        {% else %}
+          Pending
+        {% endif %}
+      </span>
+    </div>
+  </div>
+  <div class="row mb-3">
+    <div class="col-12 col-md-6 col-lg-8 mb-3">
+      <form action="{% url 'observation.update' observation.id %}" method="post">
+        {% csrf_token %}
+        <fieldset
+          {% if not perms.observation.change_observation %}disabled{% endif %}
+          {% if not observation.is_pending %}disabled{% endif %}
+        >
+          {% bootstrap_form form %}
+        </fieldset>
+        <div class="d-flex justify-content-end">
+          <button
+            class="btn btn-primary"
+            type="submit"
+            {% if not perms.observation.change_observation %}disabled{% endif %}
+            {% if not observation.is_pending %}disabled{% endif %}
+          >
+            <i class="fa fa-save"></i>
+            Save
+          </button>
+        </div>
+      </form>
+    </div>
+    {% if observation %}
+    <div class="col-12 col-md-6 col-lg-4">
+      <div class="card card-body mb-3">
+        <h3 class="border-bottom pb-1">
+          Actions
+        </h3>
+        <div class="d-flex flex-column gap-2">
+          {% if perms.observation.view_configuration %}
+          <a
+            href="{% url 'observation.configuration-list' observation.id %}"
+            class="btn btn-sm btn-secondary"
+          >
+            <i class="fa fa-gear"></i>
+            Browse Configurations
+          </a>
+          {% else %}
+          <button
+            href=""
+            class="btn btn-sm btn-secondary"
+            disabled
+          >
+            <i class="fa fa-gear"></i>
+            Browse Samples
+          </button>
+          {% endif %}
+          {% if perms.observation.view_sample %}
+          <a
+            href="{% url 'observation.sample-list' observation.id %}"
+            class="btn btn-sm btn-secondary"
+          >
+            <i class="fa fa-file"></i>
+            Browse Samples
+          </a>
+          {% else %}
+          <button
+            href=""
+            class="btn btn-sm btn-secondary"
+            disabled
+          >
+            <i class="fa fa-file"></i>
+            Browse Samples
+          </button>
+          {% endif %}
+          <button
+            href=""
+            class="btn btn-sm btn-secondary"
+            disabled
+            {% if not perms.observation.view_sample %}disabled{% endif %}
+          >
+            <i class="fa fa-image"></i>
+            Browse Images (Coming Soon)
+          </button>
+        </div>
+      </div>
+      <div class="card card-body">
+        <h3 class="border-bottom mb-3 pb-1">
+          More Information
+        </h3>
+        <ul>
+          <li>
+            {{ observation.samples.count|default:0|intcomma }} total samples
+          </li>
+          <li>
+            {{ observation.recent_samples.count|default:0|intcomma }} samples this week
+          </li>
+          <li>
+            {{ observation.created_at|date }}
+            (Created)
+          </li>
+          <li>
+            {{ observation.created_at|date }}
+            (Last Updated)
+          </li>
+        </ul>
+      </div>
+    </div>
+    {% endif %}
+    </div>
+</turbo-frame>
+{% endblock %}
+
+{% block morescript %}
+<script>
+  function setCurrentLocation() {
+    navigator.geolocation.getCurrentPosition(position => {
+      const { latitude, longitude } = position.coords;
+      $('input[name="latitude"]').val(latitude);
+      $('input[name="longitude"]').val(longitude);
+    });
+  }
+</script>
+{% endblock %}

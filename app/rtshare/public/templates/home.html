@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h1>
+    🌌 Project Star Sweep
+  </h1>
+
+  <b>Goal</b>
+  <p>
+    We aim to develop a small fleet of interconnected radio telescopes and use them to scan
+    the Milky Way (among other targets). Images of our observations will be made
+    available once the steps needed for that are complete.
+  </p>
+
+  <b>Progress</b>
+  <p>
+    Currently we're still in the buildout phase: putting together the scopes and
+    developing the software and hardware tools we will need to complete the project.
+  </p>
+
+  <div class="card card-body">
+    <h2>Fleet Status</h2>
+    <div class="d-flex justify-content-start gap-5">
+      {% for scope in telescopes %}
+        <div>
+          <div>
+            <b>
+              {% if request.user.is_authenticated %}
+              <a href="{% url 'telescope.update' scope.id %}">
+                {{ scope.name }}
+              </a>
+              {% else %}
+              {{ scope.name }}
+              {% endif %}
+            </b>
+          </div>
+          <div class="flex-1 d-flex gap-2">
+            <span
+              class="
+                badge
+                {% if scope.is_active %}bg-primary{% else %}bg-secondary{% endif %}
+              "
+            >
+              {{ scope.get_status_display }}
+            </span>
+            <span
+              class="
+                badge
+                {% if scope.is_online %}bg-success{% else %}bg-secondary{% endif %}
+              "
+            >
+              {{ scope.get_state_display }}
+            </span>
+          </div>
+        </div>
+      {% empty %}
+        <small class="text-muted">
+          No scopes are available.
+        </small>
+      {% endfor %}
+    </div>
+  </div>
+{% endblock %}

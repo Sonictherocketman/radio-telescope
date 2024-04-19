@@ -1,0 +1,75 @@
+{% load static %}
+
+<nav class="navbar navbar-expand-lg navbar-light bg-white">
+  <div class="container-fluid">
+    {% url 'public.home' as home_url %}
+    <a class="navbar-brand" href="{{ home_url }}">
+      🔭
+      Project Star Sweep
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ms-auto me-0 mb-2 mb-lg-0 fs-5">
+        {% if user.is_authenticated %}
+          {% url 'telescope.list' as telescopes_url %}
+          <li class="nav-item">
+            <a
+              class="nav-link {% if request.path == telescopes_url %}active{% endif %}"
+              {% if request.path == telescopes_url %}aria-current="page"{% endif %}
+              href="{{ telescopes_url }}"
+            >
+              <i class="fa-solid fa-satellite-dish"></i> Telescopes
+            </a>
+          </li>
+          {% url 'observation.list' as observations_url %}
+          <li class="nav-item">
+            <a
+              class="nav-link {% if request.path == observations_url %}active{% endif %}"
+              {% if request.path == observations_url %}aria-current="page"{% endif %}
+              href="{{ observations_url }}"
+            >
+              <i class="fa-solid fa-calendar-days"></i> Observations
+            </a>
+          </li>
+          {% url 'user.account' as accounts_url %}
+          <li class="nav-item">
+            <a
+              class="nav-link {% if request.path == accounts_url %}active{% endif %}"
+              {% if request.path == accounts_url %}aria-current="page"{% endif %}
+              href="{{ accounts_url }}"
+            >
+              <i class="fa-solid fa-circle-user"></i> Account
+            </a>
+          </li>
+          {% if user.is_staff %}
+            {% url 'admin:index' as admin_url %}
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                href="{{ admin_url }}"
+                data-turbo="false"
+              >
+                <i class="fa-solid fa-gear"></i>
+                <span class="d-lg-none d-xl-inline-block">Admin Panel</span>
+              </a>
+            </li>
+          {% endif %}
+          <li class="nav-item">
+            <a class="nav-link" aria-current="page" href="{% url 'logout' %}">
+              <i class="fa-solid fa-arrow-right-from-bracket"></i>
+              <span class="d-lg-none d-xl-inline-block">Log Out</span>
+            </a>
+          </li>
+        {% else %}
+          <li class="nav-item">
+            <a class="nav-link" aria-current="page" href="{% url 'login' %}">
+              Login
+            </a>
+          </li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+</nav>

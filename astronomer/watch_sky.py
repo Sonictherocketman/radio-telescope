@@ -5,10 +5,12 @@ import shlex
 from subprocess import run, CalledProcessError
 import time
 
-from . import settings
+from . import db, settings
 
 
 logger = logging.getLogger('astronomer')
+
+connection = None
 
 
 HEADER_TEMPLATE = """
@@ -18,10 +20,15 @@ HEADER_TEMPLATE = """
 # PPM: {ppm}
 # N-Samples: {n}
 # Capture Time: {timestamp}
+# Identifier: {identifier}
 """
 
 
 def setup():
+    # Setup database
+    global connection
+    connection = db.setup_and_connect()
+
     # TODO: Reset position
 
     # TODO: Check Lackey Connections
@@ -42,10 +49,7 @@ def test_device(n=10, device_index=0):
     command = f"""
         rtl_sdr \
             -f {settings.CAPTURE_CENTER_FREQUENCY} \
-            -s {settings.CAPTURE_SAMPLE_RATE} \
             -d {device_index} \
-            -g {settings.CAPTURE_GAIN} \
-            -p {settings.CAPTURE_PPM} \
             -S \
             -n {n} -
     """
@@ -65,19 +69,20 @@ def test_device(n=10, device_index=0):
 
 
 def take_reading(
+    identifier,
     frequency,
     sample_rate,
     gain=0,
     device_index=0,
     ppm=0,
     n=0,
-    compression=1,
 ):
     """ Take a reading from the device given the settings provided
     and save those to the a file as a compressed archive.
     """
     now = datetime.utcnow()
     header = HEADER_TEMPLATE.format(
+        identifier=identifier,
         frequency=frequency,
         sample_rate=sample_rate,
         gain=gain,
@@ -90,6 +95,8 @@ def take_reading(
     filename = f'sample-{short_now}.iqd'
 
     command = f"""
+        {{
+            echo "{header}";
             rtl_sdr \
                 -f {frequency} \
                 -s {sample_rate} \
@@ -97,32 +104,39 @@ def take_reading(
                 -g {gain} \
                 -p {ppm} \
                 -S \
-                -n {n} {filename};
+                -n {n} - | base64 | fold -s -w80;;
+        }} > {filename}
     """
 
     return run(
         command,
         shell=True,
-#         check=True,
         capture_output=True,
         cwd=settings.CAPTURE_DATA_PATH,
     )
 
 
 def loop():
-    try:
-        take_reading(
-            frequency=settings.CAPTURE_CENTER_FREQUENCY,
-            sample_rate=settings.CAPTURE_SAMPLE_RATE,
-            gain=settings.CAPTURE_GAIN,
-            ppm=settings.CAPTURE_PPM,
-            n=settings.CAPTURE_SAMPLES_PER_DUMP
-        )
-    except CalledProcessError as e:
-        logger.error(f'Failed to take reading. {e}')
-        raise e
+    with connection as cursor:
+        tasks = db.list_active_tasks(cursor, datetime.utcnow())
 
     # TODO: Check Bounds & Move
+
+    # TODO: Track?
+
+    for task in tasks:
+        try:
+            take_reading(
+                identifier=task['id'],
+                frequency=task['frequency'],
+                sample_rate=task['sample_rate'],
+                gain=task['gain'],
+                ppm=task['ppm'],
+                n=task['sample_size'],
+            )
+        except CalledProcessError as e:
+            logger.error(f'Failed to take reading. {e}')
+            raise e
 
 
 def watch_sky():
@@ -136,7 +150,7 @@ def watch_sky():
                 logger.debug('End data capture iteration. Sleeping...')
                 time.sleep(settings.STEP_DURATION_SECONDS)
         except Exception as e:
-            logger.error('Encountered error during recording. Exiting...')
+            logger.error(f'Encountered error during recording. {e}. Exiting...')
     else:
         logger.error('Setup failed. Exiting.')
 

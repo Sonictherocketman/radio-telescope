@@ -2,8 +2,9 @@ import argparse
 import logging
 import sys
 
+from .downlink import downlink
+from .transmit import transmit
 from .watch_sky import watch_sky
-from .phone_home import phone_home
 
 
 logger = logging.getLogger('astronomer')
@@ -21,7 +22,7 @@ def main():
         'mode',
         type=str,
         default='watchsky',
-        help='Which mode to run in. Options are watchsky and phonehome.',
+        help='Which mode to run in. Options are watchsky, downlink, and transmit.',
     )
     parser.add_argument(
         '-l', '--log-level',
@@ -43,7 +44,7 @@ def main():
             level=args.log_level,
         )
         watch_sky()
-    elif args.mode == 'phonehome':
+    elif args.mode == 'transmit':
         logging.basicConfig(
             format='%(asctime)s [%(levelname)s]: %(message)s',
             encoding='utf-8',
@@ -53,6 +54,17 @@ def main():
             ),
             level=args.log_level,
         )
-        phone_home()
+        transmit()
+    elif args.mode == 'downlink':
+        logging.basicConfig(
+            format='%(asctime)s [%(levelname)s]: %(message)s',
+            encoding='utf-8',
+            handlers=(
+                logging.FileHandler('astronomer-downlink.log'),
+                logging.StreamHandler(sys.stdout)
+            ),
+            level=args.log_level,
+        )
+        downlink()
     else:
         raise ValueError('Invalid mode selected.')

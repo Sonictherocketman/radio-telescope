@@ -1,3 +1,9 @@
 from django.shortcuts import render
 
-# Create your views here.
+from telescope.models import Telescope
+
+
+def home_view(request):
+    return render(request, 'home.html', context={
+        'telescopes': Telescope.objects.filter(status=Telescope.Status.ACTIVE)
+    })

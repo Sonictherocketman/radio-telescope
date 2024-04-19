@@ -1,0 +1,43 @@
+{% load humanize %}
+<a
+  class="list-group-item"
+  href="{% url 'observation.update' observation.id %}"
+>
+  <div class="d-flex justify-content-between gap-2">
+    <h4>
+      {{ observation.name }}
+    </h4>
+    <div>
+      <span
+        class="
+          badge
+          {% if observation.is_in_progress %}
+            bg-info
+          {% elif observation.is_complete %}
+            bg-success
+          {% else %}
+            bg-secondary
+          {% endif %}
+        "
+      >
+        {% if observation.is_in_progress %}
+          In Progress
+        {% elif observation.is_complete %}
+          Complete
+        {% else %}
+          Pending
+        {% endif %}
+      </span>
+    </div>
+  </div>
+  <div>
+    {{ observation.start_at|date:'SHORT_DATETIME_FORMAT' }} - {{ observation.end_at|date:'SHORT_DATETIME_FORMAT' }}
+  </div>
+  <div>
+    {{ observation.samples.count|default:0|intcomma }} samples collected.
+  </div>
+  <div>
+    {{ observation.telescopes.count|default:0|intcomma }}
+    telescope{{ observation.telescopes.count|pluralize }}.
+  </div>
+</a>

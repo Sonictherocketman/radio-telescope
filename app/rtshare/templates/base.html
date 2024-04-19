@@ -1,0 +1,59 @@
+{% load static %}
+{% load django_bootstrap5 %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="turbo-root" content="/">
+    <link rel="shortcut icon" type="image/jpg" href="{% static 'images/favicon.png'%}" />
+
+    {% block preload %}
+    <link rel="preload" as="style" href="{% static 'bootstrap/css/bootstrap.css' %}?v=1.5">
+    {% block morepreload %}{% endblock %}
+    {% endblock %}
+
+    {% bootstrap_css %}
+    <link href="{% static 'fontawesome/css/all.min.css' %}?v=1.5" rel="stylesheet" data-turbo-track="reload">
+    <link href="{% static 'styles.css' %}?v=1.5" rel="stylesheet" data-turbo-track="reload">
+    <script type="module">
+      import hotwiredTurbo from 'https://cdn.skypack.dev/@hotwired/turbo@v7.3.0';
+    </script>
+    <script src="{% static 'jquery.min.js' %}" data-turbo-track="reload"></script>
+    {% block morehead %}{% endblock %}
+    {% block opengraph %}{% endblock %}
+    <title>{% block title %}{% block subtitle %}{% endblock %}Project Star Sweep{% endblock %}</title>
+  </head>
+  <body>
+    {% with request.user as user %}
+    {% block navbar %}
+      {% include 'navbar.html' %}
+    {% endblock %}
+    {% endwith %}
+    {% block body %}
+      <main class="container">
+        {% bootstrap_messages %}
+        {% block main %}
+          {% block hero %}{% endblock %}
+          {% block content %}{% endblock %}
+        {% endblock %}
+      </main>
+      {% block aside %}{% endblock %}
+    {% endblock %}
+    {% block footer %}
+      {% include 'footer.html' %}
+    {% endblock %}
+    {% bootstrap_javascript %}
+    {% block morescript %}{% endblock %}
+    {% if request.user.is_authenticated %}
+    <script>
+      $(function() {
+        Turbo.session.drive = false;
+
+        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+        const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+      });
+    </script>
+    {% endif %}
+  </body>
+</html>
