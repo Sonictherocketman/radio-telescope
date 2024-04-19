@@ -5,16 +5,27 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
+ENVIRONMENT = os.environ.get('ENVIRONMENT', 'dev').lower()
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-t0ur6*+9+vamb5e_f2+5r%57+1lv!+9x!c38y#$ddd-!@2cxj8'
+if ENVIRONMENT == 'dev':
+    ENVIRONMENT_COLOR = 'gray'
+elif ENVIRONMENT == 'test':
+    ENVIRONMENT_COLOR = 'orange'
+elif ENVIRONMENT == 'ci':
+    ENVIRONMENT_COLOR = 'red'
+else:
+    ENVIRONMENT_COLOR = 'red'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 
-ALLOWED_HOSTS = []
+SECRET_KEY = os.environ['SECRET_KEY']
+DEBUG = (ENVIRONMENT == 'dev')
+
+if not DEBUG:
+    ALLOWED_HOSTS = [
+        '.starsweep.space',
+    ]
+else:
+    ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -91,16 +102,55 @@ EVENTSTREAM_CHANNELMANAGER_CLASS = 'telescope.channels.TelescopeChannelManager'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
+# Security
+
+SECURE_HSTS_SECONDS = 518400
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_FRAME_DENY = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_BROWSER_XSS_FILTER = True
+SESSION_COOKIE_HTTPONLY = True
+
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+
+if not DEBUG:
+    # See notes at https://docs.djangoproject.com/en/1.10/ref/settings/
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+if DEBUG:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
-}
+else:
+    CONN_MAX_AGE = 10
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ['DATABASE_NAME'],
+            'USER': os.environ['POSTGRES_USER'],
+            'PASSWORD': os.environ['POSTGRES_PASSWORD'],
+            'HOST': os.environ['POSTGRES_HOST'],
+            'PORT': '5432',
+        }
+    }
 
+# Caches
+
+if CACHE_URL := os.environ.get('CACHE_URL', None):
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.memcached.PyMemcacheCache',
+            'LOCATION': CACHE_URL,
+        }
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -120,7 +170,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
@@ -132,6 +181,18 @@ USE_I18N = True
 
 USE_TZ = True
 
+# Sending Email
+
+EMAIL_HOST = os.environ['EMAIL_HOST']
+EMAIL_PORT = os.environ['EMAIL_PORT']
+EMAIL_HOST_USER = os.environ['EMAIL_HOST_USER']
+EMAIL_HOST_PASSWORD = os.environ['EMAIL_HOST_PASSWORD']
+EMAIL_USE_TLS = True
+DEFAULT_FROM_EMAIL = os.environ.get(
+    'DEFAULT_FROM_EMAIL',
+    'noreply@starsweep.space',
+)
+EMAIL_TIMEOUT = 10
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
@@ -152,3 +213,38 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.environ['MEDIA_ROOT']
+
+# Logger Settings
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        '': {
+            'handlers': ['console'],
+            'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
+        },
+    },
+}
+
+try:
+    CELERY_BROKER_URL = os.environ['CELERY_BROKER_URL']
+except KeyError:
+    CELERY_ALWAYS_EAGER = True
+    CELERY_EAGER_PROPAGATES = True
+
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_ACCEPT_CONTENT = ('json',)
+CELERY_TIMEZONE = 'UTC'
+CELERY_ENABLE_UTC = True
+
+if time_limit := os.environ.get('CELERY_TASK_SOFT_TIME_LIMIT', None):
+    CELERYD_TASK_SOFT_TIME_LIMIT = int(time_limit)
+
+if time_limit := os.environ.get('CELERY_TASK_TIME_LIMIT', None):
+    CELERYD_TASK_TIME_LIMIT = int(time_limit)

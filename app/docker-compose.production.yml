@@ -1,0 +1,109 @@
+version: '3'
+services:
+
+  app:
+    ports:
+      - '127.0.0.1:8001:8000'
+    depends_on:
+      db:
+        condition: service_healthy
+      memcached:
+        condition: service_started
+      broker:
+        condition: service_healthy
+    volumes:
+      - /mnt/encrypted/filestorage:/opt/filestorage
+      - /opt/volumes/staticfiles:/opt/staticfiles
+
+  app_backup:
+    build:
+      context: ./app
+    environment:
+      - RUN_MODE=app
+      - ENVIRONMENT
+      - USE_SSL
+      - DATABASE_NAME
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - POSTGRES_HOST
+      - MEDIA_ROOT
+      - STATIC_ROOT
+      - EMAIL_HOST
+      - EMAIL_PORT
+      - EMAIL_HOST_USER
+      - EMAIL_HOST_PASSWORD
+      - SITEDOMAIN
+      - SECRET_KEY
+      - CELERY_BROKER_URL
+      - CACHE_URL
+    restart: always
+    ports:
+      - '127.0.0.1:8002:8000'
+    depends_on:
+      db:
+        condition: service_healthy
+      memcached:
+        condition: service_started
+      broker:
+        condition: service_healthy
+    volumes:
+      - /mnt/encrypted/filestorage:/opt/filestorage
+      - /opt/volumes/staticfiles:/opt/staticfiles
+    command: ./docker-entrypoint.sh
+
+  worker:
+    depends_on:
+      db:
+        condition: service_healthy
+      broker:
+        condition: service_healthy
+    volumes:
+      - /mnt/encrypted/filestorage:/opt/filestorage
+
+  scheduler:
+    build:
+      context: ./app
+    environment:
+      - RUN_MODE=beat
+      - ENVIRONMENT
+      - USE_SSL
+      - DATABASE_NAME
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - POSTGRES_HOST
+      - MEDIA_ROOT
+      - STATIC_ROOT
+      - EMAIL_HOST
+      - EMAIL_PORT
+      - EMAIL_HOST_USER
+      - EMAIL_HOST_PASSWORD
+      - SITEDOMAIN
+      - SECRET_KEY
+      - CELERY_BROKER_URL
+      - CACHE_URL
+    restart: always
+    command: ./docker-entrypoint.sh
+    depends_on:
+      db:
+        condition: service_healthy
+      broker:
+        condition: service_healthy
+    volumes:
+        - /opt/volumes/scheduler:/opt/scheduler
+
+  db:
+    volumes:
+      - /mnt/encrypted/pgdata:/var/lib/postgresql/data
+
+  broker:
+    ports:
+      - '127.0.0.1:15672:15672'
+    volumes:
+     - /mnt/encrypted/rabbitmq:/var/lib/rabbitmq
+
+  memcached:
+    image: bitnami/memcached:latest
+    environment:
+      - MEMCACHED_CACHE_SIZE=256
+      # Approximately 4MB
+      - MEMCACHED_MAX_ITEM_SIZE=4194304

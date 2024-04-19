@@ -1,0 +1,80 @@
+version: '3'
+services:
+
+  app:
+    build:
+      context: ./app
+    environment:
+      - RUN_MODE=app
+      - ENVIRONMENT
+      - USE_SSL
+      - DATABASE_NAME
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - POSTGRES_HOST
+      - MEDIA_ROOT
+      - STATIC_ROOT
+      - EMAIL_HOST
+      - EMAIL_PORT
+      - EMAIL_HOST_USER
+      - EMAIL_HOST_PASSWORD
+      - SITEDOMAIN
+      - SECRET_KEY
+      - CELERY_BROKER_URL
+      - CACHE_URL
+
+    restart: always
+    command: ./docker-entrypoint.sh
+
+  worker:
+    build:
+      context: ./app
+    environment:
+      - RUN_MODE=worker
+      - ENVIRONMENT
+      - USE_SSL
+      - DATABASE_NAME
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - POSTGRES_HOST
+      - MEDIA_ROOT
+      - STATIC_ROOT
+      - EMAIL_HOST
+      - EMAIL_PORT
+      - EMAIL_HOST_USER
+      - EMAIL_HOST_PASSWORD
+      - SITEDOMAIN
+      - SECRET_KEY
+      - CELERY_BROKER_URL
+      - CACHE_URL
+    restart: always
+
+  db:
+    image: postgres:14.2
+    shm_size: 1g
+    container_name: db
+    environment:
+      - PGUSER=${POSTGRES_USER}
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+    restart: always
+    healthcheck:
+      test: pg_isready
+      interval: 5s
+      timeout: 10s
+      retries: 120
+
+  broker:
+    container_name: broker
+    build:
+      context: ./broker
+    restart: always
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 30s
+      retries: 3
+    environment:
+      - RABBITMQ_DEFAULT_USER=${BROKER_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASS=${BROKER_DEFAULT_PASS}
+      - RABBITMQ_DEFAULT_VHOST=${BROKER_DEFAULT_VHOST}

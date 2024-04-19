@@ -25,7 +25,6 @@ def transmit_data(filename):
         return api.upload_observation(filename, f)
 
 
-
 def loop():
     files = [
         file
