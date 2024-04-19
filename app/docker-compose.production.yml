@@ -106,7 +106,8 @@ services:
       - MEMCACHED_MAX_ITEM_SIZE=4194304
 
   pushpin:
-    image: fanout/pushpin
+    build:
+      context: ./pushpin
     restart: always
     ports:
       - '127.0.0.1:7999:7999'
