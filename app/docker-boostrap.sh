@@ -32,7 +32,7 @@ do_collectstaticfiles() {
 }
 
 do_docker() {
-    docker-compose -f ./docker-compose.yml -f ./docker-compose.$ENV.yml $@
+    docker compose -f ./docker-compose.yml -f ./docker-compose.$ENV.yml $@
 }
 
 deploy_app() {
