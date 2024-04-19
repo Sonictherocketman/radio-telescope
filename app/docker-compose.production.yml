@@ -35,6 +35,7 @@ services:
       - SECRET_KEY
       - CELERY_BROKER_URL
       - CACHE_URL
+      - GRIP_URL
     restart: always
     ports:
       - '127.0.0.1:8002:8000'
@@ -80,6 +81,7 @@ services:
       - SECRET_KEY
       - CELERY_BROKER_URL
       - CACHE_URL
+      - GRIP_URL
     restart: always
     command: ./docker-entrypoint.sh
     depends_on:

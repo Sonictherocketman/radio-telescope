@@ -21,7 +21,7 @@ services:
       - SECRET_KEY
       - CELERY_BROKER_URL
       - CACHE_URL
-
+      - GRIP_URL
     restart: always
     command: ./docker-entrypoint.sh
 
@@ -46,6 +46,7 @@ services:
       - SECRET_KEY
       - CELERY_BROKER_URL
       - CACHE_URL
+      - GRIP_URL
     restart: always
 
   db:
