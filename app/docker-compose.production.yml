@@ -115,5 +115,3 @@ services:
     environment:
       - target=app:8000
       - LOGNAME=nobody
-    volumes:
-      - /opt/volumes/routes:/etc/pushpin/routes
