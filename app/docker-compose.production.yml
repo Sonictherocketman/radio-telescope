@@ -106,3 +106,14 @@ services:
       - MEMCACHED_CACHE_SIZE=256
       # Approximately 4MB
       - MEMCACHED_MAX_ITEM_SIZE=4194304
+
+  pushpin:
+    image: fanout/pushpin
+    restart: always
+    ports:
+      - '127.0.0.1:7999:7999'
+    environment:
+      - target=app:8000
+      - LOGNAME=nobody
+    volumes:
+      - /opt/volumes/routes:/etc/pushpin/routes
