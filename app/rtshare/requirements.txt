@@ -34,7 +34,8 @@ kombu==5.3.7
 Markdown==3.6
 MarkupSafe==2.1.5
 prompt-toolkit==3.0.43
-psycopg2-binary==2.9
+psycopg==3.1.18
+psycopg-binary==3.1.18
 pubcontrol==3.5.0
 pyasn1==0.5.1
 pyasn1-modules==0.3.0
