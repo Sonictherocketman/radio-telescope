@@ -112,5 +112,5 @@ services:
     ports:
       - '127.0.0.1:7999:7999'
     environment:
-      - target="app:8000 app_backup:8000"
+      - "target=app:8000 app_backup:8000"
       - LOGNAME=nobody
