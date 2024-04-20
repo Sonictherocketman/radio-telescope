@@ -15,7 +15,7 @@ class TelescopeUser(AnonymousUser):
         return True
 
 
-class TokenAuthentication(BaseAuthentication):
+class TelescopeTokenAuthentication(BaseAuthentication):
 
     prefix = 'token'
 
