@@ -1,6 +1,8 @@
 services:
 
   app:
+    ports:
+      - '127.0.0.1:8001:8000'
     depends_on:
       db:
         condition: service_healthy
@@ -13,6 +15,8 @@ services:
       - /opt/volumes/staticfiles:/opt/staticfiles
 
   app_backup:
+    ports:
+      - '127.0.0.1:8002:8000'
     build:
       context: ./rtshare
     environment:
