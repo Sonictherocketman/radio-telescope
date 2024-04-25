@@ -1,7 +1,7 @@
 app/rtshare/media/*
 analysis/*
 *.sqlite*
-data/*
+astronomer/data/*
 misc/*
 *.sh
 *.log

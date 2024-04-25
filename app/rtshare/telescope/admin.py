@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Telescope, Observation, Token, Configuration
+from .models import Telescope, Observation, Token, Configuration, Sample
 
 
 @admin.register(Telescope)
@@ -76,6 +76,27 @@ class TokenAdmin(admin.ModelAdmin):
 
     search_fields = (
         'telescope__name',
+    )
+
+
+@admin.register(Sample)
+class SampleAdmin(admin.ModelAdmin):
+
+    list_display = (
+        'id',
+        'observation',
+        'created_at',
+        'updated_at',
+    )
+
+    readonly_fields = (
+        'uuid',
+        'created_at',
+        'updated_at',
+    )
+
+    search_fields = (
+        'observation__name',
     )
 
 

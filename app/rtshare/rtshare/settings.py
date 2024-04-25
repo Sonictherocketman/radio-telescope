@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_bootstrap5',
     'django_eventstream',
+    'storages',
 
     'public',
     'telescope',
@@ -74,8 +75,25 @@ REST_FRAMEWORK = {
         'telescope.authentication.TelescopeTokenAuthentication',
         'rest_framework.authentication.TokenAuthentication',
         'rest_framework.authentication.SessionAuthentication',
-    ]
+    ],
+}
 
+STORAGES = {
+    'remote': {
+        'BACKEND': 'storages.backends.s3.S3Storage',
+        'OPTIONS': {
+            'endpoint_url': os.environ['LINODE_BUCKET_URL'],
+            'bucket_name': os.environ['LINODE_BUCKET_NAME'],
+            'access_key': os.environ['LINODE_BUCKET_ACCESS_KEY'],
+            'secret_key': os.environ['LINODE_BUCKET_SECRET_KEY'],
+        },
+    },
+    'staticfiles': {
+        'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
+    },
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+    },
 }
 
 ROOT_URLCONF = 'rtshare.urls'

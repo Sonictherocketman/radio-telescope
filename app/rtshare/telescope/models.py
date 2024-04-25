@@ -3,12 +3,21 @@ from datetime import timedelta
 import os
 
 from django.conf import settings
+from django.core.files.storage import storages
 from django.core.validators import MaxValueValidator
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from rtshare.utils.models import BaseModel
+
+
+def get_storage():
+    return (
+        storages['default']
+        if settings.DEBUG else
+        storages['remote']
+    )
 
 
 class Token(BaseModel):
@@ -49,7 +58,8 @@ class Sample(BaseModel):
     )
 
     data = models.FileField(
-        upload_to='samples/%Y/%m/'
+        storage=get_storage(),
+        upload_to='data/'
     )
 
     class Meta:
