@@ -17,7 +17,7 @@ class TelescopeUser(AnonymousUser):
 
 class TelescopeTokenAuthentication(BaseAuthentication):
 
-    prefix = 'token'
+    prefix = 'device'
 
     def authenticate(self, request):
         try:
@@ -28,9 +28,9 @@ class TelescopeTokenAuthentication(BaseAuthentication):
             )
             token = token.strip()
         except ValueError:
-             raise exceptions.AuthenticationFailed(_('Invalid token.'))
+            return None
 
         if telescope := Telescope.objects.filter(token__key=token).first():
             return (TelescopeUser(telescope=telescope), None)
         else:
-             raise exceptions.AuthenticationFailed(_('Invalid token.'))
+            return None

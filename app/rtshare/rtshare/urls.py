@@ -25,4 +25,9 @@ urlpatterns = [
     path('accounts/', include('django.contrib.auth.urls')),
 
     path('api/events/<channel>', events),
+    # path(
+    #     'events/<channel>',
+    #     django_eventstream.views.events,
+    #     name='event-stream',
+    # ),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

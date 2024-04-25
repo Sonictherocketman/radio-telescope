@@ -11,6 +11,22 @@
       <span
         class="
           badge
+          {% if observation.is_sharing %}
+            bg-info
+          {% else %}
+            bg-secondary
+          {% endif %}
+        "
+      >
+        {% if observation.is_sharing %}
+          Time-Share Enabled
+        {% else %}
+          Exclusive
+        {% endif %}
+      </span>
+      <span
+        class="
+          badge
           {% if observation.is_in_progress %}
             bg-info
           {% elif observation.is_complete %}

@@ -12,6 +12,8 @@ from rest_framework import generics, serializers
 from .models import Observation, Telescope, Token, Sample, Configuration
 from .permissions import IsTelescopeUpdatingItself
 
+from . import tasks  # noqa
+
 
 class TelescopeListView(
     LoginRequiredMixin,
@@ -204,7 +206,18 @@ class ConfigurationDetailView(
         'gain',
     )
 
+    def send_messages(self):
+        for telescope in self.object.observation.telescopes.all():
+            serializer = ConfigurationSerializer(instance=self.object, context={
+                'telescope': telescope,
+            })
+            send_event(telescope.public_id, 'message', {
+                'type': 'update',
+                'task': serializer.data,
+            })
+
     def get_success_url(self):
+        self.send_messages()
         return reverse('configuration.update', args=(self.object.id,))
 
 
@@ -276,23 +289,23 @@ class ConfigurationSerializer(serializers.ModelSerializer):
         return instance.get_identifier(self.context['telescope'])
 
 
+class TelescopeSerializer(serializers.ModelSerializer):
+
+    tasks = ConfigurationSerializer(many=True)
+
+    class Meta:
+        model = Telescope
+        fields = (
+            'id',
+            'name',
+            'latitude',
+            'longitude',
+            'elevation',
+            'tasks',
+        )
+
+
 class TelescopeAPIView(generics.RetrieveAPIView):
-
-    class TelescopeSerializer(serializers.ModelSerializer):
-
-        tasks = ConfigurationSerializer(many=True)
-
-        class Meta:
-            model = Telescope
-            fields = (
-                'id',
-                'name',
-                'latitude',
-                'longitude',
-                'elevation',
-                'tasks',
-            )
-
 
     serializer_class = TelescopeSerializer
     queryset = Telescope.objects.filter(status=Telescope.Status.ACTIVE)

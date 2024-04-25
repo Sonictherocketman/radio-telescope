@@ -48,8 +48,6 @@
     {% if request.user.is_authenticated %}
     <script>
       $(function() {
-        Turbo.session.drive = false;
-
         const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
         const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
       });

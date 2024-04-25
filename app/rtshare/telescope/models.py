@@ -242,6 +242,15 @@ class Observation(BaseModel):
             now = timezone.now()
             return now < self.start_at
 
+    @property
+    def is_sharing(self):
+        other_concurrent_observations = Observation.objects.filter(
+            start_at__lte=self.end_at,
+            end_at__gte=self.start_at,
+            telescopes__in=self.telescopes.all()
+        ).exclude(id=self.id)
+        return other_concurrent_observations.exists()
+
 
 class Telescope(BaseModel):
 
@@ -339,6 +348,10 @@ class Telescope(BaseModel):
 
     def __str__(self):
         return f'{self.name} ({self.id})'
+
+    @property
+    def public_id(self):
+        return f'TEL-{self.id}'
 
     @property
     def current_location(self):

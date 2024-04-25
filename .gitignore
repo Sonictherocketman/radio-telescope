@@ -1,6 +1,6 @@
 app/rtshare/media/*
 analysis/*
-*.sqlite
+*.sqlite*
 data/*
 misc/*
 *.sh

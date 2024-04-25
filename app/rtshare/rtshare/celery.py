@@ -54,6 +54,12 @@ app.conf.beat_schedule = {
     #     'schedule': crontab(hour='0,3,20,22', minute=30),
     # },
 
+    # Occasionally ping each device to see if it's still alive.
+    'ping_all_devices': {
+        'task': 'telescope.tasks.ping_all',
+        'schedule': timedelta(minutes=10),
+    },
+
 }
 
 
