@@ -48,7 +48,7 @@ def setup():
 def test_device(n=10, device_index=0):
     command = f"""
         rtl_sdr \
-            -f {settings.CAPTURE_CENTER_FREQUENCY} \
+            -f {settings.CAPTURE_TEST_CENTER_FREQUENCY} \
             -d {device_index} \
             -S \
             -n {n} -
@@ -155,5 +155,3 @@ def watch_sky():
         logger.error('Setup failed. Exiting.')
 
     logger.info('Done.')
-
-

@@ -19,7 +19,7 @@ def ping(_):
     api.health_check()
 
 
-def configure(_):
+def configure(*args):
     configuration = api.get_configuration()
     with connection as cursor:
         db.truncate_tables(cursor)
@@ -120,11 +120,11 @@ def stream_data(stream):
 
 def connect():
     logger.info('Configuring...')
-    configure(None)
+    configure()
 
     logger.info('Streaming data...')
     headers = {
-        'Authorization': f'Token {settings.HOME_AUTHORIZATION_TOKEN}',
+        'Authorization': f'Device {settings.HOME_AUTHORIZATION_TOKEN}',
     }
     if last_event_id:
         headers['Last-Event-ID'] = last_event_id
@@ -150,7 +150,10 @@ def downlink():
             connect()
         except Exception as e:
             logger.warning(f'Downlink error: {e}.')
-            time.sleep(settings.DOWNLINK_RECONNECT_SECONDS)
-            logger.warning('Attempting reconnect...')
+        else:
+            logger.info(f'Unable to connect to stream. Retrying...')
+
+        time.sleep(settings.DOWNLINK_RECONNECT_SECONDS)
+        logger.warning('Attempting reconnect...')
 
     logger.info('Done.')

@@ -8,7 +8,7 @@ def health_check(timeout=settings.DEFAULT_REQUEST_TIMEOUT):
         settings.HOME_API_HEALTH_CHECK_URL,
         headers={
             'User-Agent': settings.USER_AGENT,
-            'Authorization': f'Token {settings.HOME_AUTHORIZATION_TOKEN}',
+            'Authorization': f'Device {settings.HOME_AUTHORIZATION_TOKEN}',
         },
         json={
             'state': 'online',
@@ -24,7 +24,7 @@ def get_configuration(timeout=settings.DEFAULT_REQUEST_TIMEOUT):
         settings.DOWNLINK_CONFIGURATION_URL,
         headers={
             'User-Agent': settings.USER_AGENT,
-            'Authorization': f'Token {settings.HOME_AUTHORIZATION_TOKEN}',
+            'Authorization': f'Device {settings.HOME_AUTHORIZATION_TOKEN}',
         },
         timeout=timeout,
     )
@@ -37,7 +37,7 @@ def upload_observation(filename, f, timeout=settings.DEFAULT_REQUEST_TIMEOUT):
         settings.HOME_API_TRANSMIT_URL,
         headers={
             'User-Agent': settings.USER_AGENT,
-            'Authorization': f'Token {settings.HOME_AUTHORIZATION_TOKEN}',
+            'Authorization': f'Device {settings.HOME_AUTHORIZATION_TOKEN}',
             'Content-Encoding': 'gzip',
         },
         data={'name': filename},
