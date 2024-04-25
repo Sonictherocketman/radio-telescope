@@ -38,6 +38,10 @@ services:
       - CELERY_BROKER_URL
       - CACHE_URL
       - GRIP_URL
+      - LINODE_BUCKET_NAME
+      - LINODE_BUCKET_URL
+      - LINODE_BUCKET_ACCESS_KEY
+      - LINODE_BUCKET_SECRET_KEY
     restart: always
     depends_on:
       db:
@@ -82,6 +86,10 @@ services:
       - CELERY_BROKER_URL
       - CACHE_URL
       - GRIP_URL
+      - LINODE_BUCKET_NAME
+      - LINODE_BUCKET_URL
+      - LINODE_BUCKET_ACCESS_KEY
+      - LINODE_BUCKET_SECRET_KEY
     restart: always
     command: ./docker-entrypoint.sh
     depends_on:
