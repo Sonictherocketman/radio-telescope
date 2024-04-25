@@ -25,5 +25,5 @@ urlpatterns = [
     path('api/telescope/<int:pk>/health-check', views.TelescopeHealthCheckView.as_view(), name='telescope.health-check'),
     path('api/telescope/<int:pk>/tasks', views.TelescopeAPIView.as_view(), name='telescope.tasks'),
 
-    path('api/observation/<int:pk>/transmit', views.SampleDataTransmitView.as_view(), name='observation.transmit'),
+    path('api/telescope/<int:pk>/transmit', views.SampleDataTransmitView.as_view(), name='observation.transmit'),
 ]

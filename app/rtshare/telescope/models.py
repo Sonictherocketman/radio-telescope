@@ -57,6 +57,81 @@ class Sample(BaseModel):
         on_delete=models.CASCADE,
     )
 
+    telescope = models.ForeignKey(
+        'telescope.Telescope',
+        related_name='samples',
+        on_delete=models.SET_NULL,
+        default=None,
+        null=True,
+        blank=True,
+    )
+
+    configuration = models.ForeignKey(
+        'telescope.Configuration',
+        related_name='samples',
+        on_delete=models.SET_NULL,
+        default=None,
+        null=True,
+        blank=True,
+    )
+
+    frequency = models.PositiveBigIntegerField(
+        default=None,
+        null=True,
+        blank=True,
+        help_text=(
+            'The center frequency that was captured (in Hz).'
+        )
+    )
+
+    sample_rate = models.PositiveBigIntegerField(
+        default=None,
+        null=True,
+        blank=True,
+        help_text=(
+            'The sample rate at which data was collected.'
+        )
+    )
+
+    sample_size = models.PositiveBigIntegerField(
+        default=None,
+        null=True,
+        blank=True,
+        help_text=(
+            'The number of samples in the record.'
+        )
+    )
+
+    ppm = models.PositiveSmallIntegerField(
+        default=None,
+        null=True,
+        blank=True,
+        help_text=(
+            'The PPM offset used for the device (0 is none).'
+        )
+    )
+
+    gain = models.PositiveSmallIntegerField(
+        default=None,
+        null=True,
+        blank=True,
+        validators=[
+            MaxValueValidator(100),
+        ],
+        help_text=(
+            'The amount of gain applied to the SDR.'
+        )
+    )
+
+    captured_at = models.DateTimeField(
+        default=None,
+        null=True,
+        blank=True,
+        help_text=(
+            'The timestamp when the data was collected.'
+        )
+    )
+
     data = models.FileField(
         storage=get_storage(),
         upload_to='data/'
@@ -124,6 +199,9 @@ class Configuration(BaseModel):
 
     def get_identifier(self, telescope):
         return f'{telescope.id}-{self.observation.id}-{self.id}'
+
+    def parse_identifier(self, identifier):
+        return identifier.split('-')
 
     hz_conversion = (
         ('Hz', 1),

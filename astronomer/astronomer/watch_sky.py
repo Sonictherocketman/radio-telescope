@@ -104,7 +104,7 @@ def take_reading(
                 -g {gain} \
                 -p {ppm} \
                 -S \
-                -n {n} - | base64 | fold -s -w80;;
+                -n {n} - | base64 | fold -s -w80;
         }} > {filename}
     """
 

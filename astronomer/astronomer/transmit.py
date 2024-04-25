@@ -82,16 +82,15 @@ def transmit():
         )
         return
 
-    try:
-        while True:
-            logger.debug('Beginning transmission...')
+    while True:
+        logger.debug('Beginning transmission...')
+        try:
             loop()
+        except Exception as e:
+            logger.warning(f'Received error: {e}. Exiting...')
+        finally:
             logger.debug('Ending transmission. Sleeping...')
             time.sleep(settings.TRANSMIT_WAIT_SECONDS)
-    except Exception as e:
-        logger.warning(f'Received error: {e}. Exiting...')
-    finally:
-        pass
 
     logger.info('Done')
 
