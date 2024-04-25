@@ -126,15 +126,22 @@
       {% if request.user.is_staff %}
       <div class="card card-body mb-3">
         <h3 class="border-bottom mb-3 pb-1">
-          API Token
+          Device Configuration
         </h3>
+        <b>Telescope ID</b>
         <div class="p-3 mb-1 bg-light rounded">
-          <code>
+          <code class="d-block">
+            {{ telescope.id }}
+          </code>
+        </div>
+        <b>API Key</b>
+        <div class="p-3 mb-1 bg-light rounded">
+          <code class="d-block">
             {{ telescope.token.key }}
           </code>
         </div>
         <small>
-          Use this key to configure the telescope so that it can send/receive data properly.
+          Use these values to configure the telescope so that it can send/receive data properly.
         </small>
         <form
           action="{% url 'telescope.regenerate-token' telescope.id %}"
@@ -153,8 +160,8 @@
             form="regenerate-token-form"
             {% if not perms.telescope.change_telescope %}disabled{% endif %}
           >
-            <i class="fa fa-exclamation-circle"></i>
-            Send Ping
+            <i class="fa fa-exclamation-triangle"></i>
+            Regenerate Token
           </button>
         </div>
         <small>
