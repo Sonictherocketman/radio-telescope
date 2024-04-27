@@ -66,7 +66,7 @@ class TelescopeSendPingEventView(
     )
 
     def get_success_url(self):
-        send_event(str(self.kwargs['pk']), 'message', {'type': 'ping'})
+        send_event(self.object.public_id, 'message', {'type': 'ping'})
         return reverse('telescope.update', args=(self.object.id,))
 
 
@@ -86,7 +86,7 @@ class TelescopeSendReconfigureEventView(
     )
 
     def get_success_url(self):
-        send_event(str(self.kwargs['pk']), 'message', {'type': 'configure'})
+        send_event(self.object.public_id, 'message', {'type': 'configure'})
         return reverse('telescope.update', args=(self.object.id,))
 
 
