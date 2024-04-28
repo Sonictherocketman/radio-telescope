@@ -87,6 +87,7 @@ STORAGES = {
             'bucket_name': os.environ['LINODE_BUCKET_NAME'],
             'access_key': os.environ['LINODE_BUCKET_ACCESS_KEY'],
             'secret_key': os.environ['LINODE_BUCKET_SECRET_KEY'],
+            'addressing_style': 'virtual',
             'default_acl': 'public-read',
         },
     },
