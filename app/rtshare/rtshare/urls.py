@@ -11,7 +11,7 @@ from adrf.decorators import api_view
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
-async def events(*args, **kwargs):
+def events(*args, **kwargs):
     # NOTE: This wrapped view allows us to use DRF's Token-Based
     # Authentication Systems on top of the existing Event Stream
     # functionality. Otherwise, it cannot perform Token Auth.
