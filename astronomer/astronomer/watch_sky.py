@@ -120,6 +120,7 @@ def loop():
     with connection as cursor:
         tasks = db.list_active_tasks(cursor, datetime.utcnow())
 
+
     # TODO: Check Bounds & Move
 
     # TODO: Track?
