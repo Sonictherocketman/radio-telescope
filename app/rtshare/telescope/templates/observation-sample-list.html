@@ -48,7 +48,6 @@
           <div class="d-flex justify-content-between gap-2">
             <span>
               {{ sample.created_at|date:'DATETIME_FORMAT' }}
-              (<code>{{ sample.data.size|filesizeformat }}</code>)
             </span>
             {% if sample.data %}
             <a

@@ -134,9 +134,7 @@ class Sample(BaseModel):
 
     data = models.FileField(
         storage=get_storage(),
-        # TODO:
         upload_to='starsweep/data/'
-#         upload_to='data/'
     )
 
     class Meta:
