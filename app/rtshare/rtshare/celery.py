@@ -60,6 +60,12 @@ app.conf.beat_schedule = {
         'schedule': timedelta(minutes=10),
     },
 
+    # Occasionally check to see if new observations require summarization.
+    'summarize_completed_observations_if_needed': {
+        'task': 'analysis.tasks.summarize_completed_observations_if_needed',
+        'schedule': timedelta(minutes=5),
+    },
+
 }
 
 

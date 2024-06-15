@@ -19,6 +19,8 @@ def events(*args, **kwargs):
 
 
 urlpatterns = [
+    path('', include('observations.urls')),
+    path('', include('analysis.urls')),
     path('', include('public.urls')),
     path('', include('telescope.urls')),
     path('admin/', admin.site.urls),

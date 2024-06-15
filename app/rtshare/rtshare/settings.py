@@ -50,6 +50,8 @@ INSTALLED_APPS = [
 
     'public',
     'telescope',
+    'observations',
+    'analysis',
 ]
 
 MIDDLEWARE = [

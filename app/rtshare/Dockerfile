@@ -10,6 +10,11 @@ MAINTAINER Brian Schrader <brian@brianschrader.com>
 EXPOSE 8000
 WORKDIR app
 
+# Install Required Dependencies
+RUN apt-get -y update
+RUN apt-get -y upgrade
+RUN apt-get install -y ffmpeg
+
 # Cache requirements
 COPY requirements.txt .
 RUN pip install -r requirements.txt

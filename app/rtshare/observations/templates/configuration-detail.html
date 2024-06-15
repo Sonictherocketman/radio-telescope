@@ -57,6 +57,29 @@
           </button>
         </div>
       </form>
+
+      {% if configuration.summary_results.exists %}
+      <hr />
+      <h2 class="mb-3">
+        Summary Results
+      </h2>
+
+      {% for result in configuration.summary_results.all %}
+      <div class="card card-body mb-3">
+        <b>FFT</b>
+        <video preload="auto" controls>
+          <source src="{{ result.fft_video_file.url }}">
+        </video>
+      </div>
+      <div class="card card-body mb-3">
+        <b>Spectra</b>
+        <video preload="auto" controls>
+          <source src="{{ result.fft_video_file.url }}">
+        </video>
+      </div>
+      {% endfor %}
+      {% endif %}
+
     </div>
     {% if configuration %}
     <div class="col-12 col-md-6 col-lg-4">
