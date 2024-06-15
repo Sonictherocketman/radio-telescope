@@ -42,12 +42,18 @@ class ConfigurationSummaryResult(BaseModel):
 
     fft_video_file = models.FileField(
         storage=get_storage(),
-        upload_to='starsweep/results/'
+        upload_to='starsweep/results/',
+        default=None,
+        null=True,
+        blank=True,
     )
 
     spectrum_video_file = models.FileField(
         storage=get_storage(),
-        upload_to='starsweep/results/'
+        upload_to='starsweep/results/',
+        default=None,
+        null=True,
+        blank=True,
     )
 
     class Meta:
