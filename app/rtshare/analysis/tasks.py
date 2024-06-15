@@ -144,7 +144,7 @@ def summarize_completed_observations_if_needed(buffer_hours=1):
         configuration for configuration in past_configurations
         if (
             configuration.samples.exists()
-            and not configuration.configuration_summary_results.exists()
+            and not configuration.summary_results.exists()
         )
     )
 
