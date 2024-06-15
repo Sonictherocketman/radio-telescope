@@ -148,9 +148,11 @@ def summarize_observation_configuration(configuration_uuid):
         for telescope_id, samples in samples_by_telescope.items():
             summarize_configuration_data(configuration, telescope_id, samples)
     except Exception:
+        logger.error(f'Encountered error while processing results: {e}')
         configuration.processing_state = Configuration.ProcessingState.ERROR
         configuration.save()
     else:
+        logger.info(f'Results processing complete!')
         configuration.processing_state = Configuration.ProcessingState.COMPLETE
         configuration.save()
 
