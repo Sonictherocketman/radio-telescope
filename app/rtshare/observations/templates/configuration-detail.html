@@ -62,6 +62,9 @@
       <hr />
       <h2 class="mb-3">
         Summary Results
+        <small class="text-muted">
+          | {{ configuration.samples.count }} samples
+        </small>
       </h2>
 
       {% for result in configuration.summary_results.all %}
