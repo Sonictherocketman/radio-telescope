@@ -125,6 +125,8 @@ def loop():
 
     # TODO: Track?
 
+    # TODO: Add lat-lon to files for upload.
+
     for task in tasks:
         try:
             take_reading(

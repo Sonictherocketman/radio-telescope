@@ -10,6 +10,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from rtshare.utils.models import BaseModel
+from rtshare.utils.units import display_hz
 
 
 def get_storage():
@@ -195,21 +196,9 @@ class Configuration(BaseModel):
     def parse_identifier(self, identifier):
         return identifier.split('-')
 
-    hz_conversion = (
-        ('Hz', 1),
-        ('KHz', 1_000),
-        ('MHz', 1_000_000),
-        ('GHz', 1_000_000_000),
-    )
-
     @property
     def hz(self):
-        unit, value = sorted([
-            (unit, (self.frequency / mod))
-            for unit, mod in self.hz_conversion
-            if mod >= 1
-        ], reverse=True)[0]
-        return f'{value}{unit}'
+        return display_hz(self.frequency)
 
     def is_complete(self):
         return self.processing_state == self.ProcessingState.COMPLETE

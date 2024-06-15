@@ -239,7 +239,7 @@ class SampleSerializer(serializers.ModelSerializer):
         },
         'capture time': {
             'key': 'captured_at',
-            'transform': lambda x: datetime.fromtimestamp(int(x)),
+            'transform': lambda x: datetime.fromisoformat(x),
         },
     }
 

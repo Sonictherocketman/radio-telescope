@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 import gzip
 import logging
 import os.path
@@ -17,6 +17,7 @@ import scipy.signal
 
 from rtshare.celery import shared_task, Queue, Priority
 from rtshare.utils.iqd import get_data, get_header
+from rtshare.utils.units import display_hz
 from observations.models import Configuration
 from .models import ConfigurationSummaryResult
 
@@ -41,6 +42,7 @@ def get_files(samples, workbench):
 
 
 def generate_fft(data_file, format='png'):
+    # TODO: include date in header + latlon?
     with open(data_file, 'rb') as f:
         header = get_header(f)
         data = get_data(f)
@@ -51,6 +53,8 @@ def generate_fft(data_file, format='png'):
     image_file = f'{data_file}.fft.{format}'
     sample_rate = int(header['sample rate'])
     center_f = int(header['frequency'])
+    print(header['capture time'])
+    capture_time = datetime.fromisoformat(header['capture time'])
 
     yf = scipy.fftpack.fft([i_q for i_q, _ in data])
     xf = scipy.fftpack.fftfreq(yf.size, 1 / sample_rate)
@@ -60,6 +64,7 @@ def generate_fft(data_file, format='png'):
 
     fig, ax = plt.subplots()
     ax.plot(center_f + xplot, 1.0 / yplot.size * np.abs(yplot))
+    plt.title(f'SR: {display_hz(sample_rate)} | {capture_time}')
     plt.xlabel('frequency [Hz]')
     plt.ylabel('FFT')
     plt.savefig(image_file)
@@ -68,6 +73,7 @@ def generate_fft(data_file, format='png'):
 
 
 def generate_spectrum(data_file, format='png'):
+    # TODO: include date in header
     with open(data_file, 'rb') as f:
         header = get_header(f)
         data = get_data(f)
@@ -78,13 +84,21 @@ def generate_spectrum(data_file, format='png'):
     image_file = f'{data_file}.spectrum.{format}'
     sample_rate = int(header['sample rate'])
     center_f = int(header['frequency'])
+    print(header['capture time'])
+    capture_time = datetime.fromisoformat(header['capture time'])
 
-    f, S = scipy.signal.periodogram([i_q for i_q, _ in data], sample_rate)
+    f, S = scipy.signal.periodogram(
+        [i_q for i_q, _ in data],
+        sample_rate,
+        'flattop',
+        scaling='spectrum',
+    )
 
     fig, ax = plt.subplots()
     plt.semilogy(center_f + f, np.sqrt(S))
+    plt.title(f'SR: {display_hz(sample_rate)} | {capture_time}')
     plt.xlabel('frequency [Hz]')
-    plt.ylabel('PSD')
+    plt.ylabel('Linear spectrum [V RMS]')
     plt.savefig(image_file)
     plt.close()
     return image_file
