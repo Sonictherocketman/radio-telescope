@@ -45,6 +45,9 @@ def generate_fft(data_file, format='png'):
         header = get_header(f)
         data = get_data(f)
 
+    if not data:
+        return
+
     image_file = f'{data_file}.fft.{format}'
     sample_rate = int(header['sample rate'])
     center_f = int(header['frequency'])
@@ -68,6 +71,9 @@ def generate_spectrum(data_file, format='png'):
     with open(data_file, 'rb') as f:
         header = get_header(f)
         data = get_data(f)
+
+    if not data:
+        return
 
     image_file = f'{data_file}.spectrum.{format}'
     sample_rate = int(header['sample rate'])
@@ -108,18 +114,25 @@ def summarize_configuration_data(configuration, telescope_id, samples):
             telescope_id=telescope_id,
         )
 
+        logger.info(f'Getting files ({configuration.uuid})...')
         files = get_files(samples, workbench)
-        ffts = [generate_fft(file) for file in files]
+
+        logger.info(f'Generating FFTs ({configuration.uuid})...')
+        for file in files:
+            generate_fft(file)
         fft_video_file = generate_video_from_images('*fft.png', workbench)
-
-        spectra = [generate_spectrum(file) for file in files]
-        spectrum_video_file = generate_video_from_images('*spectrum.png', workbench)
-
         with open(os.path.join(workbench, fft_video_file), 'rb') as f:
             result.fft_video_file.save(
                 fft_video_file,
                 File(f),
             )
+        results.save()
+
+        logger.info(f'Generating Spectra ({configuration.uuid})...')
+        for file in files:
+            generate_spectrum(file)
+        spectrum_video_file = generate_video_from_images('*spectrum.png', workbench)
+
         with open(os.path.join(workbench, spectrum_video_file), 'rb') as f:
             result.spectrum_video_file.save(
                 spectrum_video_file,
@@ -147,7 +160,7 @@ def summarize_observation_configuration(configuration_uuid):
     try:
         for telescope_id, samples in samples_by_telescope.items():
             summarize_configuration_data(configuration, telescope_id, samples)
-    except Exception:
+    except Exception as e:
         logger.error(f'Encountered error while processing results: {e}')
         configuration.processing_state = Configuration.ProcessingState.ERROR
         configuration.save()
