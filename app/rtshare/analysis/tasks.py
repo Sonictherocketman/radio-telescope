@@ -53,8 +53,7 @@ def generate_fft(data_file, format='png'):
     image_file = f'{data_file}.fft.{format}'
     sample_rate = int(header['sample rate'])
     center_f = int(header['frequency'])
-    print(header['capture time'])
-    capture_time = datetime.fromisoformat(header['capture time'])
+    capture_time = header['capture time']
 
     yf = scipy.fftpack.fft([i_q for i_q, _ in data])
     xf = scipy.fftpack.fftfreq(yf.size, 1 / sample_rate)
@@ -84,8 +83,7 @@ def generate_spectrum(data_file, format='png'):
     image_file = f'{data_file}.spectrum.{format}'
     sample_rate = int(header['sample rate'])
     center_f = int(header['frequency'])
-    print(header['capture time'])
-    capture_time = datetime.fromisoformat(header['capture time'])
+    capture_time = header['capture time']
 
     f, S = scipy.signal.periodogram(
         [i_q for i_q, _ in data],
