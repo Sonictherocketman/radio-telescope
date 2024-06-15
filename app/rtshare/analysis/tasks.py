@@ -27,6 +27,8 @@ logger = logging.getLogger(__name__)
 def get_files(samples, workbench):
     files = []
     for sample in samples:
+        # TODO: just curl for them and bring them in. Django storage doesnt
+        # really work the way I expect for Linode and S3.
         logger.debug(f'Copying data for {sample.data} to {workbench}')
         filename = os.path.basename(sample.data.name)
         path = os.path.join(workbench, filename)
@@ -60,6 +62,7 @@ def generate_fft(data_file, format='png'):
     plt.xlabel('frequency [Hz]')
     plt.ylabel('FFT')
     plt.savefig(image_file)
+    plt.close()
     return image_file
 
 
@@ -79,6 +82,7 @@ def generate_spectrum(data_file, format='png'):
     plt.xlabel('frequency [Hz]')
     plt.ylabel('PSD')
     plt.savefig(image_file)
+    plt.close()
     return image_file
 
 
