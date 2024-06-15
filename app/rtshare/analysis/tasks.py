@@ -106,7 +106,7 @@ def generate_video_from_images(
     file_pattern,
     workbench,
     framerate=5,
-    fps=25,
+    fps=30,
     pixfmt='yuv420p',
     timeout=60*10,
 ):
