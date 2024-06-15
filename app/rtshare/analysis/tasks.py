@@ -131,12 +131,12 @@ def summarize_configuration_data(configuration, telescope_id, samples):
 @shared_task(queue=Queue.default, priority=Priority.default)
 def summarize_observation_configuration(configuration_uuid):
     configuration = Configuration.objects.get(uuid=configuration_uuid)
-    if configuration.processing_state is not None:
-        logger.warning(f'Refusing to re-summarize configuration results ({uuid}).')
-        return
-    else:
+    if configuration.processing_state is None:
         configuration.processing_state = Configuration.ProcessingState.IN_PROGRESS
         configuration.save()
+    else:
+        logger.warning(f'Refusing to re-summarize configuration results ({uuid}).')
+        return
 
     samples_by_telescope = {
         telescope.id: configuration.samples.filter(telescope=telescope).order_by('captured_at')
@@ -158,15 +158,9 @@ def summarize_observation_configuration(configuration_uuid):
 @shared_task(queue=Queue.default, priority=Priority.default)
 def summarize_completed_observations_if_needed(buffer_hours=1):
     logger.info('Attempting to dispatch tasks for analysis if needed...')
-    past_configurations = Configuration.objects.filter(
-        observation__end_at__lt=timezone.now() - timedelta(hours=buffer_hours)
-    )
-    past_configurations_lacking_results = (
-        configuration for configuration in past_configurations
-        if (
-            configuration.samples.exists()
-            and not configuration.summary_results.exists()
-        )
+    past_configurations_lacking_results = Configuration.objects.filter(
+        observation__end_at__lt=timezone.now() - timedelta(hours=buffer_hours),
+        processing_state__isnull=True,
     )
 
     workflow = group([

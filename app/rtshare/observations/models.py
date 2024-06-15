@@ -212,10 +212,10 @@ class Configuration(BaseModel):
         return f'{value}{unit}'
 
     def is_complete(self):
-        self.processing_state = self.ProcessingState.COMPLETE
+        return self.processing_state == self.ProcessingState.COMPLETE
 
     def is_error(self):
-        self.processing_state = self.ProcessingState.ERROR
+        return self.processing_state == self.ProcessingState.ERROR
 
 
 class Observation(BaseModel):

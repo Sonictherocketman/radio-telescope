@@ -67,11 +67,11 @@
       {% for result in configuration.summary_results.all %}
       <div class="card card-body mb-3">
         <b>FFT</b>
-        {% if result.is_complete %}
+        {% if configuration.is_complete %}
         <video preload="auto" controls>
           <source src="{{ result.fft_video_file.url }}">
         </video>
-        {% elif result.is_error %}
+        {% elif configuration.is_error %}
         <div class="d-block">
           <div class="badge bg-danger">
             Error
@@ -88,11 +88,11 @@
       </div>
       <div class="card card-body mb-3">
         <b>Spectra</b>
-        {% if result.is_complete %}
+        {% if configuration.is_complete %}
         <video preload="auto" controls>
           <source src="{{ result.spectrum_video_file.url }}">
         </video>
-        {% elif result.is_error %}
+        {% elif configuration.is_error %}
         <div class="d-block">
           <div class="badge bg-danger">
             Error
