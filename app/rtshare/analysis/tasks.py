@@ -126,7 +126,7 @@ def summarize_configuration_data(configuration, telescope_id, samples):
                 fft_video_file,
                 File(f),
             )
-        results.save()
+        result.save()
 
         logger.info(f'Generating Spectra ({configuration.uuid})...')
         for file in files:
