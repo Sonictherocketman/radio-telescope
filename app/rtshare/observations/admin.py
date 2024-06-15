@@ -55,6 +55,7 @@ class ConfigurationAdmin(admin.ModelAdmin):
     list_display = (
         'id',
         'observation',
+        'processing_state',
         'created_at',
         'updated_at',
     )
@@ -67,6 +68,10 @@ class ConfigurationAdmin(admin.ModelAdmin):
 
     search_fields = (
         'observation__name',
+    )
+
+    list_filter = (
+        'processing_state',
     )
 
 

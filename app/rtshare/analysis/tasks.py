@@ -100,12 +100,43 @@ def generate_video_from_images(file_pattern, workbench, framerate=5, fps=25, pix
     return filename
 
 
+def summarize_configuration_data(configuration, telescope_id, samples):
+    with tempfile.TemporaryDirectory() as workbench:
+        logger.info(f'Using workbench: {workbench}')
+        result = ConfigurationSummaryResult.objects.create(
+            configuration=configuration,
+            telescope_id=telescope_id,
+        )
+
+        files = get_files(samples, workbench)
+        ffts = [generate_fft(file) for file in files]
+        fft_video_file = generate_video_from_images('*fft.png', workbench)
+
+        spectra = [generate_spectrum(file) for file in files]
+        spectrum_video_file = generate_video_from_images('*spectrum.png', workbench)
+
+        with open(os.path.join(workbench, fft_video_file), 'rb') as f:
+            result.fft_video_file.save(
+                fft_video_file,
+                File(f),
+            )
+        with open(os.path.join(workbench, spectrum_video_file), 'rb') as f:
+            result.spectrum_video_file.save(
+                spectrum_video_file,
+                File(f),
+            )
+        result.save()
+
+
 @shared_task(queue=Queue.default, priority=Priority.default)
 def summarize_observation_configuration(configuration_uuid):
     configuration = Configuration.objects.get(uuid=configuration_uuid)
-    if configuration.summary_results.exists():
+    if configuration.processing_state is not None:
         logger.warning(f'Refusing to re-summarize configuration results ({uuid}).')
         return
+    else:
+        configuration.processing_state = Configuration.ProcessingState.IN_PROGRESS
+        configuration.save()
 
     samples_by_telescope = {
         telescope.id: configuration.samples.filter(telescope=telescope).order_by('captured_at')
@@ -113,32 +144,15 @@ def summarize_observation_configuration(configuration_uuid):
         if configuration.samples.filter(telescope=telescope).exists()
     }
 
-    for telescope_id, samples in samples_by_telescope.items():
-        with tempfile.TemporaryDirectory() as workbench:
-            logger.info(f'Using workbench: {workbench}')
-            result = ConfigurationSummaryResult.objects.create(
-                configuration=configuration,
-                telescope_id=telescope_id,
-            )
-
-            files = get_files(samples, workbench)
-            ffts = [generate_fft(file) for file in files]
-            fft_video_file = generate_video_from_images('*fft.png', workbench)
-
-            spectra = [generate_spectrum(file) for file in files]
-            spectrum_video_file = generate_video_from_images('*spectrum.png', workbench)
-
-            with open(os.path.join(workbench, fft_video_file), 'rb') as f:
-                result.fft_video_file.save(
-                    fft_video_file,
-                    File(f),
-                )
-            with open(os.path.join(workbench, spectrum_video_file), 'rb') as f:
-                result.spectrum_video_file.save(
-                    spectrum_video_file,
-                    File(f),
-                )
-            result.save()
+    try:
+        for telescope_id, samples in samples_by_telescope.items():
+            summarize_configuration_data(configuration, telescope_id, samples)
+    except Exception:
+        configuration.processing_state = Configuration.ProcessingState.ERROR
+        configuration.save()
+    else:
+        configuration.processing_state = Configuration.ProcessingState.COMPLETE
+        configuration.save()
 
 
 @shared_task(queue=Queue.default, priority=Priority.default)

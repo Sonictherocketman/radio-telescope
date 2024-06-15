@@ -114,6 +114,17 @@ class Sample(BaseModel):
 
 class Configuration(BaseModel):
 
+    class ProcessingState:
+        IN_PROGRESS = 'in-progress'
+        ERROR = 'error'
+        COMPLETE = 'complete'
+
+        choices = (
+            (IN_PROGRESS, 'In Progress'),
+            (ERROR, 'Error'),
+            (COMPLETE, 'Complete'),
+        )
+
     name = models.CharField(
         max_length=256,
         help_text=(
@@ -125,6 +136,16 @@ class Configuration(BaseModel):
         'observations.Observation',
         related_name='configurations',
         on_delete=models.CASCADE,
+    )
+
+    processing_state = models.CharField(
+        max_length=12,
+        choices=ProcessingState.choices,
+        blank=True,
+        null=True,
+        help_text=(
+            'The current state of the analysis for this configuration data.'
+        )
     )
 
     frequency = models.PositiveBigIntegerField(
@@ -189,6 +210,12 @@ class Configuration(BaseModel):
             if mod >= 1
         ], reverse=True)[0]
         return f'{value}{unit}'
+
+    def is_complete(self):
+        self.processing_state = self.ProcessingState.COMPLETE
+
+    def is_error(self):
+        self.processing_state = self.ProcessingState.ERROR
 
 
 class Observation(BaseModel):
