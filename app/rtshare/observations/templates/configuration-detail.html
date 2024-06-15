@@ -70,31 +70,35 @@
       {% for result in configuration.summary_results.all %}
       <div class="card card-body mb-3">
         <b>FFT</b>
-        {% if configuration.is_complete %}
-        <video preload="auto" controls>
-          <source src="{{ result.fft_video_file.url }}">
-        </video>
-        {% elif configuration.is_error %}
-        <div class="d-block">
-          <div class="badge bg-danger">
-            Error
-          </div>
-        </div>
-        {% else %}
+        {% if not configuration.is_complete %}
         <div class="d-block">
           <div class="badge bg-secondary">
             <i class="fa fa-spinner fa-spin"></i>
             Processing
           </div>
         </div>
+        {% elif configuration.is_error %}
+        <div class="d-block">
+          <div class="badge bg-danger">
+            Error
+          </div>
+        </div>
+        {% endif %}
+        {% if result.fft_video_file %}
+        <video preload="auto" controls>
+          <source src="{{ result.fft_video_file.url }}">
+        </video>
         {% endif %}
       </div>
       <div class="card card-body mb-3">
         <b>Spectra</b>
-        {% if configuration.is_complete %}
-        <video preload="auto" controls>
-          <source src="{{ result.spectrum_video_file.url }}">
-        </video>
+        {% if not configuration.is_complete %}
+        <div class="d-block">
+          <div class="badge bg-secondary">
+            <i class="fa fa-spinner fa-spin"></i>
+            Processing
+          </div>
+        </div>
         {% elif configuration.is_error %}
         <div class="d-block">
           <div class="badge bg-danger">
@@ -102,12 +106,11 @@
           </div>
         </div>
         {% else %}
-        <div class="d-block">
-          <div class="badge bg-secondary">
-            <i class="fa fa-spinner fa-spin"></i>
-            Processing
-          </div>
-        </div>
+        {% endif %}
+        {% if result.spectrum_video_file %}
+        <video preload="auto" controls>
+          <source src="{{ result.spectrum_video_file.url }}">
+        </video>
         {% endif %}
       </div>
       {% endfor %}
