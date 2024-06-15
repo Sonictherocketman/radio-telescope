@@ -102,7 +102,14 @@ def generate_spectrum(data_file, format='png'):
     return image_file
 
 
-def generate_video_from_images(file_pattern, workbench, framerate=5, fps=25, pixfmt='yuv420p'):
+def generate_video_from_images(
+    file_pattern,
+    workbench,
+    framerate=5,
+    fps=25,
+    pixfmt='yuv420p',
+    timeout=60*10,
+):
     filename = f'{uuid.uuid4()}.mp4'
     command = f"""\
         ffmpeg \
@@ -114,7 +121,7 @@ def generate_video_from_images(file_pattern, workbench, framerate=5, fps=25, pix
             -pix_fmt {pixfmt}
             {filename}
         """
-    call(shlex.split(command), cwd=workbench, timeout=60)
+    call(shlex.split(command), cwd=workbench, timeout=timeout)
     return filename
 
 
