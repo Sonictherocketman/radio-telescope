@@ -31,6 +31,7 @@ start_worker() {
         -l info \
         -Q default,processing,management,alerts \
         -E \
+        --concurrency 1 \
         --max-tasks-per-child 3
 }
 
