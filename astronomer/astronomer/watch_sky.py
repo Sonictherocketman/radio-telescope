@@ -1,7 +1,6 @@
 from datetime import datetime
 import logging
 import os
-import shlex
 from subprocess import run, CalledProcessError
 import time
 
@@ -119,7 +118,6 @@ def take_reading(
 def loop():
     with connection as cursor:
         tasks = db.list_active_tasks(cursor, datetime.utcnow())
-
 
     # TODO: Check Bounds & Move
 

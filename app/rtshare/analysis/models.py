@@ -1,13 +1,6 @@
-import binascii
-from datetime import timedelta
-import os
-
 from django.conf import settings
 from django.core.files.storage import storages
-from django.core.validators import MaxValueValidator
 from django.db import models
-from django.utils import timezone
-from django.utils.translation import gettext_lazy as _
 
 from rtshare.utils.models import BaseModel
 

@@ -5,6 +5,7 @@ from django.urls import reverse
 from django_eventstream import send_event
 
 from .models import Observation, Sample, Configuration
+from .serializers import ConfigurationSerializer
 
 
 class ObservationListView(
@@ -116,5 +117,3 @@ class ObservationSampleListView(
             **super().get_context_data(),
             'observation': get_object_or_404(Observation, id=self.kwargs['pk']),
         }
-
-

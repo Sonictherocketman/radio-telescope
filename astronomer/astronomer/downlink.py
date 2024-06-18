@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 import logging
 import json
-import sqlite3
 import time
 
 import httpx
@@ -29,19 +28,16 @@ def configure(*args):
 
 
 def add_task(data):
-    configuration = api.get_configuration()
     with connection as cursor:
         db.insert_task(data['task'], cursor)
 
 
 def update_task(data):
-    configuration = api.get_configuration()
     with connection as cursor:
         db.update_task(data['task'], cursor)
 
 
 def delete_task(data):
-    configuration = api.get_configuration()
     with connection.cursor() as cursor:
         db.delete_task(data['task'], cursor)
 
@@ -151,7 +147,7 @@ def downlink():
         except Exception as e:
             logger.warning(f'Downlink error: {e}.')
         else:
-            logger.info(f'Unable to connect to stream. Retrying...')
+            logger.info('Unable to connect to stream. Retrying...')
 
         time.sleep(settings.DOWNLINK_RECONNECT_SECONDS)
         logger.warning('Attempting reconnect...')

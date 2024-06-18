@@ -151,6 +151,7 @@ def update_task(task, cursor):
         task['id'],
     ))
 
+
 def delete_task(task, cursor):
     return cursor.execute("""
         DELETE task WHERE id = ?

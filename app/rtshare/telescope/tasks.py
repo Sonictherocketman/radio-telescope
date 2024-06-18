@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 @shared_task(queue=Queue.default, priority=Priority.default)
 def ping(telescope_id):
-    logger.info(f'Attempting to ping ')
+    logger.info('Attempting to ping ')
     send_event(telescope_id, 'message', {'type': 'ping'})
 
 

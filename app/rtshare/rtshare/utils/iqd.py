@@ -54,7 +54,6 @@ def get_data(file, as_complex=True):
 
     def _get_entries():
         for i_raw, q_raw in zip(data[0::1], data[1::2]):
-            n = 0
             i, q = (
                 (i_raw / (255 / 2)) - 1,
                 (q_raw / (255 / 2)) - 1,

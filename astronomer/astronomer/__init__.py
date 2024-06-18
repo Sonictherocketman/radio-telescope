@@ -1,1 +1,1 @@
-from .astronomer import main
+from .astronomer import main  # noqa

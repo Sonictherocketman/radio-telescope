@@ -8,4 +8,4 @@ class IsTelescopeUpdatingItself(BasePermission):
     """
 
     def has_permission(self, request, view):
-        return True #view.kwargs['pk'] == request.user.telescope.id
+        return True  # view.kwargs['pk'] == request.user.telescope.id

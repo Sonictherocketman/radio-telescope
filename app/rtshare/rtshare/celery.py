@@ -2,7 +2,7 @@ from datetime import timedelta
 import os
 
 from celery import Celery, shared_task  # noqa
-from celery.schedules import crontab
+# from celery.schedules import crontab
 from django.conf import settings
 
 

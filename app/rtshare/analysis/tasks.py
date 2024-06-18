@@ -1,5 +1,4 @@
-from datetime import datetime, timedelta
-import gzip
+from datetime import timedelta
 import logging
 import os.path
 import shlex
@@ -184,7 +183,7 @@ def summarize_observation_configuration(configuration_uuid):
         configuration.processing_state = Configuration.ProcessingState.ERROR
         configuration.save()
     else:
-        logger.info(f'Results processing complete!')
+        logger.info('Results processing complete!')
         configuration.processing_state = Configuration.ProcessingState.COMPLETE
         configuration.save()
 

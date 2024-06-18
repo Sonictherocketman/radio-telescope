@@ -4,7 +4,6 @@ import os
 import os.path
 import random
 import shutil
-import tempfile
 import time
 
 import httpx
@@ -93,4 +92,3 @@ def transmit():
             time.sleep(settings.TRANSMIT_WAIT_SECONDS)
 
     logger.info('Done')
-

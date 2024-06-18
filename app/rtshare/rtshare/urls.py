@@ -1,6 +1,5 @@
 from django.conf import settings
 from django.conf.urls.static import static
-from django.contrib.auth import views
 from django.contrib import admin
 from django.urls import path, include
 import django_eventstream
@@ -20,7 +19,6 @@ def events(*args, **kwargs):
 
 urlpatterns = [
     path('', include('observations.urls')),
-    path('', include('analysis.urls')),
     path('', include('public.urls')),
     path('', include('telescope.urls')),
     path('admin/', admin.site.urls),

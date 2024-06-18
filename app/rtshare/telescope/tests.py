@@ -1,6 +1,4 @@
-import gzip
 import os.path
-import tempfile
 
 from django.contrib.auth.models import User
 from django.test import TestCase

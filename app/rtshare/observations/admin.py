@@ -73,5 +73,3 @@ class ConfigurationAdmin(admin.ModelAdmin):
     list_filter = (
         'processing_state',
     )
-
-
