@@ -27,7 +27,7 @@ class TelescopeTokenAuthentication(BaseAuthentication):
                 .split(self.prefix)
             )
             token = token.strip()
-        except ValueError:
+        except ValueError as e:
             return None
 
         if telescope := Telescope.objects.filter(token__key=token).first():
