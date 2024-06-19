@@ -25,8 +25,8 @@ except ImportError:
 class StatusLight:
     pin: int = None
 
-    FAST_DELAY = 0.2
-    SLOW_DELAY = 0.4
+    FAST_DELAY = 0.15
+    SLOW_DELAY = 0.3
 
     def __init__(self, pin: int = None):
         super().__init__()

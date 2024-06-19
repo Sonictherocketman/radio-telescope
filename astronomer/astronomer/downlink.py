@@ -117,7 +117,7 @@ def stream_data(stream, light):
             chunk.append([key, ''])
 
 
-def connect():
+def connect(light):
     logger.info('Configuring...')
     configure()
 
@@ -128,16 +128,14 @@ def connect():
     if last_event_id:
         headers['Last-Event-ID'] = last_event_id
 
-    with (
-        httpx.stream(
-            'GET',
-            settings.DOWNLINK_EVENT_STREAM_URL,
-            follow_redirects=True,
-            timeout=settings.DOWNLINK_EVENT_STREAM_TIMEOUT,
-            headers=headers,
-        ) as r,
-        managed_status(Status.downlink) as light
-    ):
+    with httpx.stream(
+        'GET',
+        settings.DOWNLINK_EVENT_STREAM_URL,
+        follow_redirects=True,
+        timeout=settings.DOWNLINK_EVENT_STREAM_TIMEOUT,
+        headers=headers,
+    ) as r:
+        light.on()
         stream_data(r, light)
 
 
@@ -148,12 +146,14 @@ def downlink():
     logger.info('Beginning downlink from host...')
 
     while True:
-        try:
-            connect()
-        except Exception as e:
-            logger.warning(f'Downlink error: {e}.')
-        else:
-            logger.info('Unable to connect to stream. Retrying...')
+        with managed_status(Status.downlink, initial_state=False) as light:
+            try:
+                connect(light)
+            except Exception as e:
+                logger.warning(f'Downlink error: {e}.')
+                light.flash_error()
+            else:
+                logger.info('Unable to connect to stream. Retrying...')
 
         time.sleep(settings.DOWNLINK_RECONNECT_SECONDS)
         logger.warning('Attempting reconnect...')
