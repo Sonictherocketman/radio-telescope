@@ -9,6 +9,7 @@ import time
 import httpx
 
 from . import api, settings
+from .lights import managed_status, Status
 
 
 logger = logging.getLogger('astronomer')
@@ -53,17 +54,20 @@ def loop():
             os.remove(path)
 
         logger.info(f'Transmitting file ({file}) to remote host...')
-        try:
-            transmit_data(gz_path)
-        except httpx.RequestError as e:
-            logger.warning(
-                f'Transmission failure: {file}. '
-                f'Status Code: {e.response.status_code} '
-                f'Exception thrown during transmision: {e}'
-            )
-        else:
-            os.remove(gz_path)
-            logger.info('Transmission complete.')
+        with managed_status(Status.transmit) as light:
+            try:
+                transmit_data(gz_path)
+            except httpx.RequestError as e:
+                logger.warning(
+                    f'Transmission failure: {file}. '
+                    f'Status Code: {e.response.status_code} '
+                    f'Exception thrown during transmision: {e}'
+                )
+                light.flash_error()
+            else:
+                os.remove(gz_path)
+                logger.info('Transmission complete.')
+                light.flash_ok()
 
         # Sleep for a while to not overload the server.
         time.sleep(random.randint(0, 10))
@@ -73,13 +77,17 @@ def transmit():
     """ Given the data in the database, watch for new entries
     and phone home when they appear.
     """
-    try:
-        ping_home()
-    except Exception as e:
-        logger.error(
-            f'Unable to ping home. Are you sure there is internet? {e}'
-        )
-        return
+    with managed_status(Status.transmit, initial_state=False) as light:
+        try:
+            ping_home()
+        except Exception as e:
+            light.flash_error()
+            logger.error(
+                f'Unable to ping home. Are you sure there is internet? {e}'
+            )
+            return
+        else:
+            light.flash_ok()
 
     while True:
         logger.debug('Beginning transmission...')

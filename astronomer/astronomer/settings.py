@@ -25,6 +25,11 @@ CAPTURE_DATA_PATH = os.path.expanduser(os.environ.get(
     './data',
 ))
 
+CAPTURE_STATUS_PIN = int(os.environ.get(
+    'CAPTURE_STATUS_PIN',
+    18,  # TODO
+))
+
 # Transmit Settings
 
 HOME_AUTHORIZATION_TOKEN = os.environ['HOME_AUTHORIZATION_TOKEN']
@@ -43,6 +48,11 @@ HOME_API_TRANSMIT_URL = os.environ.get(
 TRANSMIT_WAIT_SECONDS = 60
 TRANSMIT_BATCH_SIZE = 1_000
 
+TRANSMIT_STATUS_PIN = int(os.environ.get(
+    'TRANSMIT_STATUS_PIN',
+    18,  # TODO
+))
+
 # Downlink Settings
 
 DOWNLINK_CONFIGURATION_URL = os.environ.get(
@@ -55,6 +65,11 @@ DOWNLINK_EVENT_STREAM_URL = os.environ.get(
 )
 DOWNLINK_EVENT_STREAM_TIMEOUT = 60 * 60 * 3  # 3 hours
 DOWNLINK_RECONNECT_SECONDS = 10
+
+DOWNLINK_STATUS_PIN = int(os.environ.get(
+    'DOWNLINK_STATUS_PIN',
+    18,  # TODO
+))
 
 # Lackey Configuration Settings
 

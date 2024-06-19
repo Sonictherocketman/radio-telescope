@@ -6,6 +6,7 @@ import time
 import httpx
 
 from . import api, db, settings
+from .lights import Status, managed_status
 
 
 logger = logging.getLogger('astronomer')
@@ -91,7 +92,7 @@ def process_event(chunk):
         return None
 
 
-def stream_data(stream):
+def stream_data(stream, light):
     global last_event_id
 
     chunk = []
@@ -101,6 +102,8 @@ def stream_data(stream):
                 # TODO: Move this and persist it.
                 if id := event.id:
                     last_event_id = id
+
+                light.flash_fast(end_state=True)
                 dispatch(event)
         elif line[0] == ':':
             # Comment line. Just ignore it.
@@ -125,14 +128,17 @@ def connect():
     if last_event_id:
         headers['Last-Event-ID'] = last_event_id
 
-    with httpx.stream(
-        'GET',
-        settings.DOWNLINK_EVENT_STREAM_URL,
-        follow_redirects=True,
-        timeout=settings.DOWNLINK_EVENT_STREAM_TIMEOUT,
-        headers=headers,
-    ) as r:
-        stream_data(r)
+    with (
+        httpx.stream(
+            'GET',
+            settings.DOWNLINK_EVENT_STREAM_URL,
+            follow_redirects=True,
+            timeout=settings.DOWNLINK_EVENT_STREAM_TIMEOUT,
+            headers=headers,
+        ) as r,
+        managed_status(Status.downlink) as light
+    ):
+        stream_data(r, light)
 
 
 def downlink():

@@ -5,6 +5,7 @@ from subprocess import run, CalledProcessError
 import time
 
 from . import db, settings
+from .lights import managed_status, Status
 
 
 logger = logging.getLogger('astronomer')
@@ -35,13 +36,16 @@ def setup():
     # Setup data directories
     os.makedirs(settings.CAPTURE_DATA_PATH, exist_ok=True)
 
-    # Test SDR Connection
-    device_is_functional = test_device()
-    if not device_is_functional:
-        logger.error('Failed receiving test data from SDR.')
-        return False
-
-    return True
+    with managed_status(Status.capture, initial_state=False) as light:
+        # Test SDR Connection
+        device_is_functional = test_device()
+        if not device_is_functional:
+            logger.error('Failed receiving test data from SDR.')
+            light.flash_error()
+            return False
+        else:
+            light.flash_ok()
+            return True
 
 
 def test_device(n=10, device_index=0):
@@ -127,14 +131,15 @@ def loop():
 
     for task in tasks:
         try:
-            take_reading(
-                identifier=task['id'],
-                frequency=task['frequency'],
-                sample_rate=task['sample_rate'],
-                gain=task['gain'],
-                ppm=task['ppm'],
-                n=task['sample_size'],
-            )
+            with managed_status(Status.capture):
+                take_reading(
+                    identifier=task['id'],
+                    frequency=task['frequency'],
+                    sample_rate=task['sample_rate'],
+                    gain=task['gain'],
+                    ppm=task['ppm'],
+                    n=task['sample_size'],
+                )
         except CalledProcessError as e:
             logger.error(f'Failed to take reading. {e}')
             raise e
