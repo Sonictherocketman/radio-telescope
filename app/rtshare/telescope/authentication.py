@@ -31,4 +31,4 @@ class TelescopeTokenAuthentication(BaseAuthentication):
         if telescope := Telescope.objects.filter(token__key=token).first():
             return (TelescopeUser(telescope=telescope), None)
         else:
-            return None
+            return AnonymousUser()
