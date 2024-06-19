@@ -100,7 +100,7 @@ def stream_data(stream, light):
         if line == '':
             if event := process_event(chunk):
                 # TODO: Move this and persist it.
-                if id := event.id:
+                if id := event.id and event.id != 'error':
                     last_event_id = id
 
                 light.flash_fast(end_state=True)
