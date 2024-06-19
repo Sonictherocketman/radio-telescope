@@ -4,12 +4,12 @@ from django.contrib import admin
 from django.urls import path, include
 import django_eventstream
 from rest_framework.decorators import permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny
 from adrf.decorators import api_view
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def events(*args, **kwargs):
     # NOTE: This wrapped view allows us to use DRF's Token-Based
     # Authentication Systems on top of the existing Event Stream
