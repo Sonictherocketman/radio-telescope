@@ -7,10 +7,7 @@ class TelescopeChannelManager(DefaultChannelManager):
 
     def can_read_channel(self, user, channel):
         # Unauthenticated users can't read any channels.
-
-        print(user)
         if not (user and user.is_authenticated):
-            print('unauth')
             return False
 
         # Authenticated users can read:

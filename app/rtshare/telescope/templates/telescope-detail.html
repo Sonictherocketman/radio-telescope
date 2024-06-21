@@ -134,39 +134,14 @@
             {{ telescope.id }}
           </code>
         </div>
-        <b>API Key</b>
+        <b>Public ID</b>
         <div class="p-3 mb-1 bg-light rounded">
           <code class="d-block">
-            {{ telescope.token.key }}
+            {{ telescope.public_id }}
           </code>
         </div>
         <small>
           Use these values to configure the telescope so that it can send/receive data properly.
-        </small>
-        <form
-          action="{% url 'telescope.regenerate-token' telescope.id %}"
-          method="post"
-          class="mb-1"
-          id="regenerate-token-form"
-          data-turbo-confirm="Are you sure? This will break the deployment of this device in the field. Click OK to regenerate the token."
-        >
-          {% csrf_token %}
-          <input type="hidden" name="id" value="{{ telescope.id }}">
-        </form>
-        <div class="d-flex flex-column gap-2 my-2">
-          <button
-            type="submit"
-            class="btn btn-sm btn-danger"
-            form="regenerate-token-form"
-            {% if not perms.telescope.change_telescope %}disabled{% endif %}
-          >
-            <i class="fa fa-exclamation-triangle"></i>
-            Regenerate Token
-          </button>
-        </div>
-        <small>
-          <i class="fa fa-exclamation-circle text-danger"></i>
-          Warning: Regenerating this key will break existing device deployments.
         </small>
       </div>
       {% endif %}

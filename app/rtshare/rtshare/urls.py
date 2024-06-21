@@ -20,7 +20,7 @@ urlpatterns = [
     path('api-auth/', include('rest_framework.urls')),
     path('accounts/', include('django.contrib.auth.urls')),
 
-    path('api/events/<channel>', events),
+    path('api/events/<channel>', events, name='event-stream'),
     # path(
     #     'events/<channel>',
     #     django_eventstream.views.events,
