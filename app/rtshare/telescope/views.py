@@ -110,27 +110,6 @@ class TelescopeObservationListView(
         }
 
 
-class TelescopeRegenerateTokenView(
-    LoginRequiredMixin,
-    PermissionRequiredMixin,
-    UpdateView,
-):
-
-    template_name = 'telescope-detail.html'
-    model = Telescope
-    context_object_name = 'token'
-    permission_required = ('telescope.change_token',)
-
-    fields = (
-        'id',
-    )
-
-    def get_success_url(self):
-        self.object.token.key = self.object.token.generate_key()
-        self.object.token.save()
-        return reverse('telescope.update', args=(self.object.id,))
-
-
 # API Views
 
 

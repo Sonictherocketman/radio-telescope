@@ -1,6 +1,4 @@
-import binascii
 from datetime import timedelta
-import os
 
 from django.conf import settings
 from django.core.files.storage import storages
@@ -17,35 +15,6 @@ def get_storage():
         if settings.DEBUG else
         storages['remote']
     )
-
-
-class Token(BaseModel):
-
-    telescope = models.OneToOneField(
-        'telescope.Telescope',
-        on_delete=models.CASCADE,
-    )
-
-    key = models.CharField(
-        max_length=40,
-        unique=True,
-        blank=True,
-    )
-
-    def save(self, *args, **kwargs):
-        if not self.key:
-            self.key = self.generate_key()
-        return super().save(*args, **kwargs)
-
-    @classmethod
-    def generate_key(cls):
-        return binascii.hexlify(os.urandom(20)).decode()
-
-    def __str__(self):
-        return self.key
-
-    class Meta:
-        ordering = ('-id',)
 
 
 class Telescope(BaseModel):
@@ -81,6 +50,10 @@ class Telescope(BaseModel):
         help_text=(
             'Any helpful text for the user of this device.'
         )
+    )
+
+    groups = models.ManyToManyField(
+        'auth.Group',
     )
 
     latitude = models.DecimalField(

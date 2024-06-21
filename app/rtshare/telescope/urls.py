@@ -27,11 +27,6 @@ urlpatterns = [
         name='telescope.reconfigure',
     ),
     path(
-        'telescopes/<int:pk>/regenerate-token',
-        views.TelescopeRegenerateTokenView.as_view(),
-        name='telescope.regenerate-token',
-    ),
-    path(
         'telescopes/<int:pk>/observations',
         views.TelescopeObservationListView.as_view(),
         name='telescope.observation-list',

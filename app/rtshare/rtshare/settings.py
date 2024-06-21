@@ -64,6 +64,11 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+AUTHENTICATION_BACKENDS = [
+    'rtshare.authentication_backends.TokenAuthenticationBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
 if not DEBUG:
     MIDDLEWARE.insert(0, "django_grip.GripMiddleware")
     GRIP_URL = os.environ['GRIP_URL']
@@ -75,7 +80,6 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'telescope.authentication.TelescopeTokenAuthentication',
         'rest_framework.authentication.TokenAuthentication',
         'rest_framework.authentication.SessionAuthentication',
     ],

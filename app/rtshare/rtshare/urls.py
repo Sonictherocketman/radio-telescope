@@ -1,20 +1,15 @@
 from django.conf import settings
 from django.conf.urls.static import static
+from django.contrib.auth import authenticate
 from django.contrib import admin
 from django.urls import path, include
 import django_eventstream
-from rest_framework.decorators import permission_classes
-from rest_framework.permissions import AllowAny
-from adrf.decorators import api_view
 
 
-@api_view(['GET'])
-@permission_classes([AllowAny])
-def events(*args, **kwargs):
-    # NOTE: This wrapped view allows us to use DRF's Token-Based
-    # Authentication Systems on top of the existing Event Stream
-    # functionality. Otherwise, it cannot perform Token Auth.
-    return django_eventstream.views.events(*args, **kwargs)
+def events(request, **kwargs):
+    if user := authenticate(request):
+        request.user = user
+    return django_eventstream.views.events(request, **kwargs)
 
 
 urlpatterns = [
