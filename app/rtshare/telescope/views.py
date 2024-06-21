@@ -123,7 +123,6 @@ class TelescopeHealthCheckView(generics.UpdateAPIView):
                 'state',
             )
 
-        @transaction.atomic
         def update(self, instance, validated_data):
             validated_data['state_updated_at'] = timezone.now()
             return super().update(instance, validated_data)
@@ -136,6 +135,14 @@ class TelescopeHealthCheckView(generics.UpdateAPIView):
     permission_classes = (
         IsTelescopeUpdatingItself,
     )
+
+    @transaction.atomic
+    def partial_update(self, *args, **kwargs):
+        return super().update(*args, **kwargs)
+
+    @transaction.atomic
+    def update(self, *args, **kwargs):
+        return super().update(*args, **kwargs)
 
 
 class TelescopeSerializer(serializers.ModelSerializer):
