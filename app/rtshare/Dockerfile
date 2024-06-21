@@ -15,6 +15,9 @@ RUN apt-get -y update
 RUN apt-get -y upgrade
 RUN apt-get install -y ffmpeg
 
+RUN python -m pip install uvicorn
+RUN python -m pip install gunicorn
+
 # Cache requirements
 COPY requirements.txt .
 RUN pip install -r requirements.txt

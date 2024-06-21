@@ -7,13 +7,12 @@ log() {
 }
 
 start_app() {
-    daphne \
-        --port 8000 \
-        -b 0.0.0.0 \
-        --verbosity 1 \
-        --no-server-name \
-        --http-timeout 320 \
-        rtshare.asgi:application
+    python -m gunicorn rtshare.asgi:application \
+        -k uvicorn.workers.UvicornWorker \
+        --log-level info \
+        --worker-class gevent \
+        -w 3 \
+        --bind=0.0.0.0:8000
 }
 
 # start_monitor() {
