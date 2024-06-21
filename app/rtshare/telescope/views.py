@@ -1,4 +1,5 @@
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.db import transaction
 from django.views.generic import UpdateView, ListView
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -122,11 +123,15 @@ class TelescopeHealthCheckView(generics.UpdateAPIView):
                 'state',
             )
 
+        @transaction.atomic
         def update(self, instance, validated_data):
             validated_data['state_updated_at'] = timezone.now()
             return super().update(instance, validated_data)
 
-    queryset = Telescope.objects.filter(status=Telescope.Status.ACTIVE)
+    queryset = (
+        Telescope.objects.filter(status=Telescope.Status.ACTIVE)
+        .select_for_update()
+    )
     serializer_class = HealthCheckSerializer
     permission_classes = (
         IsTelescopeUpdatingItself,
