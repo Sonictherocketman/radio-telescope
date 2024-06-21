@@ -10,7 +10,6 @@ start_app() {
     python -m gunicorn rtshare.asgi:application \
         -k uvicorn.workers.UvicornWorker \
         --log-level info \
-        --worker-class gevent \
         -w 3 \
         --bind=0.0.0.0:8000
 }
