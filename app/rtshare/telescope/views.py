@@ -68,6 +68,7 @@ class TelescopeSendPingEventView(
         send_event(self.object.public_id, 'message', {
             'type': 'ping',
             'id': self.object.public_id,
+            'dt': timezone.now().isoformat(),
         })
         return reverse('telescope.update', args=(self.object.id,))
 
@@ -91,6 +92,7 @@ class TelescopeSendReconfigureEventView(
         send_event(self.object.public_id, 'message', {
             'type': 'configure',
             'id': self.object.public_id,
+            'dt': timezone.now().isoformat(),
         })
         return reverse('telescope.update', args=(self.object.id,))
 
@@ -148,6 +150,7 @@ class TelescopeHealthCheckView(generics.UpdateAPIView):
             send_event(channel, 'message', {
                 'type': 'pong-received',
                 'id': telescope.public_id,
+                'dt': timezone.now().isoformat(),
             })
         return response
 
@@ -160,6 +163,7 @@ class TelescopeHealthCheckView(generics.UpdateAPIView):
             send_event(channel, 'message', {
                 'type': 'pong-received',
                 'id': telescope.public_id,
+                'dt': timezone.now().isoformat(),
             })
         return response
 
@@ -192,6 +196,7 @@ class TelescopeAPIView(generics.RetrieveAPIView):
             send_event(channel, 'message', {
                 'type': 'configure-recieved',
                 'id': telescope.public_id,
+                'dt': timezone.now().isoformat(),
             })
         return response
 
@@ -216,5 +221,6 @@ class SampleDataTransmitView(generics.CreateAPIView):
             send_event(channel, 'message', {
                 'type': 'sample-received',
                 'id': self.telescope.public_id,
+                'dt': timezone.now().isoformat(),
             })
         return response
