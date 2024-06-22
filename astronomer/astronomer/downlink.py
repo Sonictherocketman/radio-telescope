@@ -100,7 +100,7 @@ def stream_data(stream, light):
         if line == '':
             if event := process_event(chunk):
                 # TODO: Move this and persist it.
-                if id := event.id and event.id != 'error':
+                if (id := event.id) and (event.id != 'error'):
                     last_event_id = id
 
                 light.flash_fast(end_state=True)
@@ -150,7 +150,7 @@ def downlink():
             try:
                 connect(light)
             except Exception as e:
-                logger.warning(f'Downlink error: {e}.')
+                logger.error(f'Downlink error: {e}.', exc_info=True)
                 light.flash_error()
             else:
                 logger.info('Unable to connect to stream. Retrying...')

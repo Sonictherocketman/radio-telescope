@@ -33,7 +33,7 @@
               <i class="fa-solid fa-calendar-days"></i> Observations
             </a>
           </li>
-          {% url 'user.account' as accounts_url %}
+          {% url 'user.account' request.user.id as accounts_url %}
           <li class="nav-item">
             <a
               class="nav-link {% if request.path == accounts_url %}active{% endif %}"

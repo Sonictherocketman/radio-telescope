@@ -16,14 +16,15 @@ urlpatterns = [
     path('', include('observations.urls')),
     path('', include('public.urls')),
     path('', include('telescope.urls')),
+    path('', include('users.urls')),
     path('admin/', admin.site.urls),
     path('api-auth/', include('rest_framework.urls')),
     path('accounts/', include('django.contrib.auth.urls')),
 
     path('api/events/<channel>', events, name='event-stream'),
-    # path(
-    #     'events/<channel>',
-    #     django_eventstream.views.events,
-    #     name='event-stream',
-    # ),
+    path(
+        'stream/events/',
+        django_eventstream.views.events,
+        name='multi-event-stream',
+    ),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+
+{% block content %}
+
+<h1>
+  <i class="fa-solid fa-circle-user"></i>
+  Account Information
+</h1>
+
+<div class="card card-body">
+  <legend class="border-bottom mb-3">
+    Personal &amp; Contact Information
+  </legend>
+  <p>
+    Below is your personal and contact information. If you'd like to change this information, then please talk to your SOSNetLab Contact.
+  </p>
+  <form method="POST" action=".">
+    <fieldset>
+      {% csrf_token %}
+      <div class="row mb-1">
+        <div class="col-12">
+          {% bootstrap_form form %}
+        </div>
+    </fieldset>
+    <div class="d-flex justify-content-end">
+      <button class="btn btn-primary">
+        <i class="fa fa-save"></i> Save
+      </button>
+    </div>
+  </form>
+  <legend class="border-bottom my-3">
+    Group Information
+  </legend>
+  <p>
+    Below is a list of groups you belong to. If you'd like to be a part of additional groups, then please talk to your SOSNetLab Contact.
+  </p>
+  <div class="list-group list-group-flush">
+    {% for group in user.groups.all %}
+    <div class="list-group-item">
+      <div class="ms-2 me-auto">
+        <div class="fw-bold">{{ group.name }}</div>
+        {{ group.spaces.count }} spaces
+      </div>
+    </div>
+    {% empty %}
+    <div class="list-group-item text-muted">
+      <i>You are not a member of any groups</i>
+    </div>
+    {% endfor %}
+  </div>
+
+
+  <legend class="border-bottom my-3">
+    Useful Links
+  </legend>
+  <div class="text-start">
+    <a
+      class="btn btn-link"
+      href="{% url 'user.events-list' object.id %}"
+    >
+      My Events
+    </a>
+  </div>
+</div>
+
+
+{% endblock %}

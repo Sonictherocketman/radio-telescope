@@ -57,7 +57,7 @@ app.conf.beat_schedule = {
     # Occasionally ping each device to see if it's still alive.
     'ping_all_devices': {
         'task': 'telescope.tasks.ping_all',
-        'schedule': timedelta(minutes=10),
+        'schedule': timedelta(minutes=5),
     },
 
     # Occasionally check to see if new observations require summarization.

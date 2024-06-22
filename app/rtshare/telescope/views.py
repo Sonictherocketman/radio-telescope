@@ -65,7 +65,10 @@ class TelescopeSendPingEventView(
     )
 
     def get_success_url(self):
-        send_event(self.object.public_id, 'message', {'type': 'ping'})
+        send_event(self.object.public_id, 'message', {
+            'type': 'ping',
+            'id': self.object.public_id,
+        })
         return reverse('telescope.update', args=(self.object.id,))
 
 
@@ -85,7 +88,10 @@ class TelescopeSendReconfigureEventView(
     )
 
     def get_success_url(self):
-        send_event(self.object.public_id, 'message', {'type': 'configure'})
+        send_event(self.object.public_id, 'message', {
+            'type': 'configure',
+            'id': self.object.public_id,
+        })
         return reverse('telescope.update', args=(self.object.id,))
 
 
@@ -127,22 +133,35 @@ class TelescopeHealthCheckView(generics.UpdateAPIView):
             validated_data['state_updated_at'] = timezone.now()
             return super().update(instance, validated_data)
 
-    queryset = (
-        Telescope.objects.filter(status=Telescope.Status.ACTIVE)
-        .select_for_update()
-    )
+    queryset = Telescope.objects.filter(status=Telescope.Status.ACTIVE)
     serializer_class = HealthCheckSerializer
     permission_classes = (
         IsTelescopeUpdatingItself,
     )
 
-    @transaction.atomic
     def partial_update(self, *args, **kwargs):
-        return super().update(*args, **kwargs)
+        with transaction.atomic():
+            response = super().update(*args, **kwargs)
 
-    @transaction.atomic
+        telescope = self.get_object()
+        for channel in telescope.user_channels:
+            send_event(channel, 'message', {
+                'type': 'pong-received',
+                'id': telescope.public_id,
+            })
+        return response
+
     def update(self, *args, **kwargs):
-        return super().update(*args, **kwargs)
+        with transaction.atomic():
+            response = super().update(*args, **kwargs)
+
+        telescope = self.get_object()
+        for channel in telescope.user_channels:
+            send_event(channel, 'message', {
+                'type': 'pong-received',
+                'id': telescope.public_id,
+            })
+        return response
 
 
 class TelescopeSerializer(serializers.ModelSerializer):
@@ -166,11 +185,15 @@ class TelescopeAPIView(generics.RetrieveAPIView):
     serializer_class = TelescopeSerializer
     queryset = Telescope.objects.filter(status=Telescope.Status.ACTIVE)
 
-    def get_serializer_context(self):
-        return {
-            **super().get_serializer_context(),
-            'telescope': get_object_or_404(Telescope, id=self.kwargs['pk']),
-        }
+    def retrieve(self, request, pk=None):
+        response = super().retrieve(request, pk=pk)
+        telescope = get_object_or_404(Telescope, id=pk)
+        for channel in telescope.user_channels:
+            send_event(channel, 'message', {
+                'type': 'configure-recieved',
+                'id': telescope.public_id,
+            })
+        return response
 
 
 class SampleDataTransmitView(generics.CreateAPIView):
@@ -186,4 +209,12 @@ class SampleDataTransmitView(generics.CreateAPIView):
 
     def create(self, request, pk=None):
         self.telescope = get_object_or_404(Telescope, id=pk)
-        return super().create(request, pk=None)
+        with transaction.atomic():
+            response = super().create(request, pk=None)
+
+        for channel in self.telescope.user_channels:
+            send_event(channel, 'message', {
+                'type': 'sample-received',
+                'id': self.telescope.public_id,
+            })
+        return response

@@ -135,6 +135,14 @@ class Telescope(BaseModel):
         return self.state == self.State.ONLINE
 
     @property
+    def user_channels(self):
+        return [
+            f'U-{user.id}'
+            for group in self.groups.all()
+            for user in group.user_set.all()
+        ]
+
+    @property
     def recent_observations(self):
         threshold = timezone.now() - timedelta(days=7)
         return self.observations.filter(start_at__gte=threshold, end_at__lte=timezone.now())

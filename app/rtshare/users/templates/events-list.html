@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<turbo-frame id="content" target="_top">
+  <h1>
+    My Events
+  </h1>
+  <div class="pb-3">
+    <b>Showing Events For</b>
+    <ul>
+      <li>User Feed</li>
+      {% for telescope in telescopes %}
+        <li><code>{{ telescope.name }}</code></li>
+      {% endfor %}
+    </ul>
+  </div>
+  <hr />
+  <div
+    class="event-list"
+    style="
+      overflow-y:scroll;
+      height: 500px;
+    "
+  ></div>
+  <template id="event-item">
+    <div class="mb-1 pb-1 border-bottom d-flex justify-content-between align-items-end">
+      <div>
+        <small class="d-block">
+          <code class="event-type text-secondary"></code>
+          <code class="event-id text-primary"></code>
+        </small>
+        <code class="event-data d-block"></code>
+      </div>
+      <div class="text-end">
+        <small>
+          <time class="event-ts"></time>
+        </small>
+      </div>
+    </div>
+  </template>
+</turbo-frame>
+<script>
+$(() => {
+  const source = new EventSource('{% url "multi-event-stream" %}?channel={{stream_key }}{% for telescope in telescopes %}&channel={{telescope.public_id }}{% endfor %}');
+  source.addEventListener('message', event => {
+    console.log('Event detected!', event.data);
+    const content = document.querySelector('#event-item').content.cloneNode(true);
+    content.querySelector('.event-id').innerText = event.lastEventId;
+    content.querySelector('.event-type').innerText = event.type;
+    content.querySelector('.event-data').innerText = event.data;
+    content.querySelector('.event-ts').innerText = (new Date()).toLocaleString();
+    document.querySelector('.event-list').appendChild(content);
+
+    const eventList = document.querySelector('.event-list');
+    eventList.scrollTop = eventList.scrollHeight;
+  });
+});
+</script>
+{% endblock %}
