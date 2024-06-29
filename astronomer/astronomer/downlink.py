@@ -150,8 +150,8 @@ def downlink():
             try:
                 connect(light)
             except Exception as e:
-                logger.error(f'Downlink error: {e}.', exc_info=True)
                 light.flash_error()
+                logger.error(f'Downlink error: {e}.', exc_info=True)
             else:
                 logger.info('Unable to connect to stream. Retrying...')
             finally:
