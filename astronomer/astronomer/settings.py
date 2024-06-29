@@ -27,7 +27,7 @@ CAPTURE_DATA_PATH = os.path.expanduser(os.environ.get(
 
 CAPTURE_STATUS_PIN = int(os.environ.get(
     'CAPTURE_STATUS_PIN',
-    12,
+    24,
 ))
 
 # Transmit Settings
@@ -50,7 +50,7 @@ TRANSMIT_BATCH_SIZE = 1_000
 
 TRANSMIT_STATUS_PIN = int(os.environ.get(
     'TRANSMIT_STATUS_PIN',
-    16,
+    23,
 ))
 
 # Downlink Settings
@@ -68,7 +68,7 @@ DOWNLINK_RECONNECT_SECONDS = 10
 
 DOWNLINK_STATUS_PIN = int(os.environ.get(
     'DOWNLINK_STATUS_PIN',
-    26,
+    11,
 ))
 
 # Lackey Configuration Settings

@@ -34,7 +34,7 @@ class StatusLight:
         logger.debug(f'Initializing {self.pin}.')
         if GPIO:
             GPIO.setup(self.pin, GPIO.OUT)
-            logger.debug(f'[GPIO Unavailable] Pin {self.pin} setup.')
+            logger.debug(f'[GPIO Available] Pin {self.pin} setup.')
         else:
             logger.warning(f'[GPIO Unavailable] Pin {self.pin} setup.')
         self.off()
