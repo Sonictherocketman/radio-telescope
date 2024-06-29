@@ -154,6 +154,8 @@ def downlink():
                 light.flash_error()
             else:
                 logger.info('Unable to connect to stream. Retrying...')
+            finally:
+                light.off()
 
         time.sleep(settings.DOWNLINK_RECONNECT_SECONDS)
         logger.warning('Attempting reconnect...')

@@ -42,7 +42,7 @@ class StatusLight:
     def _flash(self, n=1, delay=FAST_DELAY, end_state=False):
         for _ in range(0, n):
             self.off()
-            time.sleep(0.05)
+            time.sleep(delay)
             self.on()
             time.sleep(delay)
             self.off()
