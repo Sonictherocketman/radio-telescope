@@ -114,7 +114,7 @@ def stream_data(stream, light):
             value = fields[1].lstrip(' ')
             chunk.append([key, value])
         else:
-            chunk.append([key, ''])
+            chunk.append([line, ''])
 
 
 def connect(light):
