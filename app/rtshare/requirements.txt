@@ -22,7 +22,7 @@ contourpy==1.2.1
 cryptography==42.0.5
 cycler==0.12.1
 daphne==4.1.0
-Django==5.0
+Django==5.0.8
 django-bootstrap5==24.1
 django-eventstream==5.1.0
 django-extensions==3.1.5
