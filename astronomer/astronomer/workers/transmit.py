@@ -9,7 +9,7 @@ import time
 import httpx
 
 from . import api, settings
-from .lights import managed_status, Status
+# from .lights import managed_status, Status
 
 
 logger = logging.getLogger('astronomer')
@@ -77,7 +77,7 @@ def transmit():
     """ Given the data in the database, watch for new entries
     and phone home when they appear.
     """
-    with managed_status(Status.transmit, initial_state=False) as light:
+    with managed_status(StatusLight.transmit, initial_state=False) as light:
         try:
             ping_home()
         except Exception as e:

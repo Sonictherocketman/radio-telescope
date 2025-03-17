@@ -6,7 +6,8 @@ import time
 import httpx
 
 from . import api, db, settings
-from .lights import Status, managed_status
+from .lights import StatusLight
+from .mpsafe import managed_status
 
 
 logger = logging.getLogger('astronomer')

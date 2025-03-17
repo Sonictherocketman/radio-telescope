@@ -1,9 +1,6 @@
 from dataclasses import dataclass
-from contextlib import contextmanager
 import logging
 import time
-
-from . import settings
 
 
 logger = logging.getLogger('astronomer')
@@ -22,7 +19,7 @@ except ImportError:
 
 
 @dataclass
-class StatusLight:
+class Light:
     pin: int = None
 
     FAST_DELAY = 0.15
@@ -75,46 +72,3 @@ class StatusLight:
             logger.debug(f'[GPIO Unavailable] Pin {self.pin} off.')
         else:
             logger.warning(f'[GPIO Unavailable] Pin {self.pin} off.')
-
-
-TransmitStatusLight = StatusLight(pin=settings.TRANSMIT_STATUS_PIN)
-CaptureStatusLight = StatusLight(pin=settings.CAPTURE_STATUS_PIN)
-DownlinkStatusLight = StatusLight(pin=settings.DOWNLINK_STATUS_PIN)
-
-
-class Status:
-    transmit = 'transmit'
-    capture = 'capture'
-    downlink = 'downlink'
-
-    _lights = {
-        transmit: TransmitStatusLight,
-        capture: CaptureStatusLight,
-        downlink: DownlinkStatusLight,
-    }
-
-    @classmethod
-    def light_for(cls, name):
-        return cls._lights.get(name)
-
-
-@contextmanager
-def use_light(light: StatusLight, initial_state=True) -> StatusLight:
-    start_at = time.time()
-    if initial_state:
-        light.on()
-    else:
-        light.off()
-    try:
-        yield light
-    finally:
-        if time.time() - start_at < 1:
-            logger.debug('Adding 1s delay for LED toggle to avoid burnout.')
-            time.sleep(1)
-        light.off()
-
-
-@contextmanager
-def managed_status(status: str, initial_state=True) -> StatusLight:
-    with use_light(Status.light_for(status), initial_state=initial_state) as light:
-        yield light

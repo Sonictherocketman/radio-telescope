@@ -1,10 +1,9 @@
 import argparse
+from queue import Empty
 import logging
+from multiprocessing import Manager, SimpleQueue, Pool
 import sys
-
-from .downlink import downlink
-from .transmit import transmit
-from .watch_sky import watch_sky
+import time
 
 
 logger = logging.getLogger('astronomer')
@@ -19,12 +18,6 @@ def main():
         )
     )
     parser.add_argument(
-        'mode',
-        type=str,
-        default='watchsky',
-        help='Which mode to run in. Options are watchsky, downlink, and transmit.',
-    )
-    parser.add_argument(
         '-l', '--log-level',
         default=logging.INFO,
         type=str,
@@ -32,39 +25,61 @@ def main():
     )
 
     args = parser.parse_args()
+    logging.basicConfig(
+        format='%(asctime)s [%(levelname)s]: %(message)s',
+        encoding='utf-8',
+        handlers=(
+            logging.FileHandler('astronomer.log'),
+            logging.StreamHandler(sys.stdout)
+        ),
+        level=args.log_level,
+    )
 
-    if args.mode == 'watchsky':
-        logging.basicConfig(
-            format='%(asctime)s [%(levelname)s]: %(message)s',
-            encoding='utf-8',
-            handlers=(
-                logging.FileHandler('astronomer-watchsky.log'),
-                logging.StreamHandler(sys.stdout)
-            ),
-            level=args.log_level,
-        )
-        watch_sky()
-    elif args.mode == 'transmit':
-        logging.basicConfig(
-            format='%(asctime)s [%(levelname)s]: %(message)s',
-            encoding='utf-8',
-            handlers=(
-                logging.FileHandler('astronomer-phonehome.log'),
-                logging.StreamHandler(sys.stdout)
-            ),
-            level=args.log_level,
-        )
-        transmit()
-    elif args.mode == 'downlink':
-        logging.basicConfig(
-            format='%(asctime)s [%(levelname)s]: %(message)s',
-            encoding='utf-8',
-            handlers=(
-                logging.FileHandler('astronomer-downlink.log'),
-                logging.StreamHandler(sys.stdout)
-            ),
-            level=args.log_level,
-        )
-        downlink()
-    else:
-        raise ValueError('Invalid mode selected.')
+    # Kick off children
+
+    with Manager() as manager, Pool(4) as pool:
+        logger.debug('Configuring shared state...')
+        log_queue = manager.Queue()
+        event_queue = manager.Queue()
+        should_calibrate = manager.Event()
+        should_observe = manager.Event()
+        # TODO: remove & set by button
+        should_calibrate.set()
+        should_observe.set()
+        # END TODO
+
+        results = []
+
+        logger.info('Starting child processes...')
+        from .workers.logger import log_events
+        results.append(pool.apply_async(
+            log_events,
+            args=(log_queue, args.log_level)
+        ))
+        from .workers.status_indicator import handle_events
+        results.append(pool.apply_async(
+            handle_events,
+            args=(log_queue, event_queue)
+        ))
+        from .workers.watch_sky import watch_sky
+        results.append(pool.apply_async(
+            watch_sky,
+            args=(log_queue, event_queue, should_calibrate, should_observe)
+        ))
+        from .workers.spectrum import analyze_spectra
+        results.append(pool.apply_async(
+            analyze_spectra,
+            args=(log_queue, event_queue, should_calibrate, should_observe)
+        ))
+#         from .transmit import transmit
+#         pool.apply_async(transmit, args=(event_queue,))
+#         from .downlink import downlink
+#         pool.apply_async(downlink, args=(event_queue,))
+
+        try:
+            while not any(result.ready() for result in results):
+                time.sleep(1)
+        finally:
+            pool.terminate()
+
+        logger.error('Process error with unknown child.')
