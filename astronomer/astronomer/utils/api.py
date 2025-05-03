@@ -1,17 +1,14 @@
 import httpx
 
-from . import settings
+from .. import settings
 
 
 def health_check(timeout=settings.DEFAULT_REQUEST_TIMEOUT):
-    response = httpx.put(
+    response = httpx.get(
         settings.HOME_API_HEALTH_CHECK_URL,
         headers={
             'User-Agent': settings.USER_AGENT,
             'Authorization': f'Token {settings.HOME_AUTHORIZATION_TOKEN}',
-        },
-        json={
-            'state': 'online',
         },
         timeout=timeout,
     )

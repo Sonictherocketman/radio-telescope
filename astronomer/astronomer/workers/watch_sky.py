@@ -1,23 +1,30 @@
 from base64 import b64encode
 from datetime import datetime
 import os
+import shutil
 import time
 
 from rtlsdr import RtlSdr, rtlsdr
 
 from .. import settings
 from ..models.lights import StatusLight
-from ..models.observation import Observation
+from ..models.observation import Observation, Calibration
 from ..mpsafe import managed_status
 from ..unsafe.devices import DefaultDevice
-from ..utils import iqdp
+from ..utils import iqd
 
 
 device: DefaultDevice = None
-calibration: Observation = None
+calibration: Calibration = None
+calibration_signal_path = None
 
 
-def setup(log, event_queue, test_mode=False, bias_tee=True):
+CALIBRATION_FILE_EXTENSION = '.ciq'
+SIGNAL_FILE_EXTENSION = '.iq'
+CONFIG_FILE_EXTENSION = '.json'
+
+
+def setup(log, event_queue, test_mode=False, bias_tee=False):
     # Connect to SDR
     if test_mode:
         log.put(('info', 'Test SDR mode: enabled'))
@@ -30,6 +37,7 @@ def setup(log, event_queue, test_mode=False, bias_tee=True):
 
     # Setup data directories
     os.makedirs(settings.CAPTURE_DATA_PATH, exist_ok=True)
+    os.makedirs(settings.CALIBRATION_PATH, exist_ok=True)
 
     # Test SDR Connection
     with managed_status(
@@ -46,10 +54,20 @@ def setup(log, event_queue, test_mode=False, bias_tee=True):
             return True
 
 
-def warm_up(log, sample_rate, frequency, gain, bandwidth, n=int(1e7)):
-    log.put(('info', f'Performing device warmup {n=}...'))
+def warm_up(
+    log,
+    sample_rate,
+    frequency,
+    gain,
+    bandwidth,
+    n=settings.WARM_UP_SAMPLES,
+    destination='/dev/null',
+):
+    estimated_time = n // sample_rate
+    log.put(('info', f'Performing device warmup {n=}, {estimated_time=}s...'))
     global device
     device.read(
+        destination,
         sample_rate=sample_rate,
         frequency=frequency,
         gain=gain,
@@ -58,16 +76,20 @@ def warm_up(log, sample_rate, frequency, gain, bandwidth, n=int(1e7)):
     )
 
 
-def take_calibration_reading(log, *args, **kwargs):
+def take_calibration_reading(log, *args, c_ext=CALIBRATION_FILE_EXTENSION, **kwargs):
     log.put(('info', '[Calibration] Begin...'))
-    observation = take_reading(
+    observation, signal_path = take_reading(
         log,
         *args,
         directory=settings.CALIBRATION_PATH,
+        signal_ext=c_ext,
+        use_calibration=False,
         **kwargs,
     )
     global calibration
     calibration = observation
+    global calibration_signal_path
+    calibration_signal_path = signal_path
     log.put(('info', '[Calibration] End.'))
 
 
@@ -80,17 +102,25 @@ def take_reading(
     n=1,
     bandwidth=1,
     ts=None,
+    use_calibration=True,
+    signal_ext=SIGNAL_FILE_EXTENSION,
+    config_ext=CONFIG_FILE_EXTENSION,
+    c_ext=CALIBRATION_FILE_EXTENSION,
     directory=settings.CAPTURE_DATA_PATH,
-) -> Observation:
+) -> (Observation, str):
     """ Take a reading from the device given the settings provided
     and save those to the a file as a compressed archive.
     """
-    filename = f'sample-{identifier}.iqdp'
-    path = os.path.join(directory, filename)
+    signal_filename = f'{identifier}{signal_ext}'
+    signal_path = os.path.join(directory, signal_filename)
 
-    global device
-    log.put(('debug', 'Collecting data from device...'))
-    signal = device.read(
+    estimated_time = n // sample_rate
+    log.put(('debug', f'Collecting data from device {n=}, {estimated_time=}s...'))
+
+    # Capture the signal
+
+    device.read(
+        signal_path,
         sample_rate=sample_rate,
         frequency=frequency,
         gain=gain,
@@ -98,20 +128,30 @@ def take_reading(
         n=n,
     )
 
+    # Write the config
+
     observation = Observation(
         identifier=identifier,
         frequency=frequency,
         sample_rate=sample_rate,
         gain=gain,
         bandwidth=bandwidth,
-        signal=signal,
-        # TODO: Check the calibration has the same settings as
-        # the current observation. If not, do not use.
-        calibration=calibration,
+        timestamp=datetime.utcnow().isoformat(),
     )
 
-    log.put(('debug', 'Writing data to disk...'))
-    iqdp.write(path, observation)
+    if use_calibration and calibration is not None:
+        log.put(('debug', 'Copying calibration data...'))
+        observation.calibration = calibration
+
+        c_signal_filename = f'{identifier}{c_ext}'
+        c_signal_path = os.path.join(directory, c_signal_filename)
+        shutil.copyfile(calibration_signal_path, c_signal_path)
+
+    log.put(('debug', 'Writing config data to disk...'))
+    observation_filename = f'{identifier}{config_ext}'
+    observation_path = os.path.join(directory, observation_filename)
+    iqd.write_config(observation_path, observation)
+    return observation, signal_path
 
 
 def loop(log, event_queue, should_calibrate, should_observe):
@@ -119,7 +159,7 @@ def loop(log, event_queue, should_calibrate, should_observe):
     short_now = now.strftime('%Y-%m-%dT%H-%M-%S-%f%Z')
 
     kwargs = dict(
-        identifier=short_now,
+        identifier=f'sample-{short_now}',
         frequency=settings.CAPTURE_FREQUENCY,
         sample_rate=settings.CAPTURE_SAMPLE_RATE,
         gain=settings.CAPTURE_GAIN,
@@ -129,11 +169,12 @@ def loop(log, event_queue, should_calibrate, should_observe):
     )
 
     try:
-        with managed_status(event_queue, StatusLight.capture):
-            if should_calibrate.is_set():
+        if should_calibrate.is_set():
+            with managed_status(event_queue, StatusLight.calibrate):
                 take_calibration_reading(log, **kwargs)
                 should_calibrate.clear()
-            if should_observe.is_set():
+        if should_observe.is_set():
+            with managed_status(event_queue, StatusLight.capture):
                 take_reading(log, **kwargs)
     except Exception as e:
         log.put(('error', f'Failed to take reading. {e}'))
@@ -147,8 +188,8 @@ def watch_sky(log, event_queue, should_calibrate, should_observe):
             with managed_status(event_queue, StatusLight.capture):
                 warm_up(
                     log,
-                    settings.CAPTURE_FREQUENCY,
                     settings.CAPTURE_SAMPLE_RATE,
+                    settings.CAPTURE_FREQUENCY,
                     settings.CAPTURE_GAIN,
                     settings.CAPTURE_BANDWIDTH,
                 )
@@ -157,7 +198,7 @@ def watch_sky(log, event_queue, should_calibrate, should_observe):
                 log.put(('debug', 'Begin data capture iteration...'))
                 loop(log, event_queue, should_calibrate, should_observe)
                 log.put(('debug', 'End data capture iteration. Sleeping...'))
-                time.sleep(settings.STEP_DURATION_SECONDS)
+                time.sleep(settings.Wait.device)
         except KeyboardInterrupt:
             log_queue.put(('info', 'Interrupted by user.'))
         except Exception as e:

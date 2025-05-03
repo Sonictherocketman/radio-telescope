@@ -1,9 +1,10 @@
 import argparse
-from queue import Empty
 import logging
-from multiprocessing import Manager, SimpleQueue, Pool
+from multiprocessing import Manager, Pool
 import sys
 import time
+
+from . import settings
 
 
 logger = logging.getLogger('astronomer')
@@ -37,16 +38,12 @@ def main():
 
     # Kick off children
 
-    with Manager() as manager, Pool(4) as pool:
+    with Manager() as manager, Pool(7) as pool:
         logger.debug('Configuring shared state...')
         log_queue = manager.Queue()
         event_queue = manager.Queue()
         should_calibrate = manager.Event()
         should_observe = manager.Event()
-        # TODO: remove & set by button
-        should_calibrate.set()
-        should_observe.set()
-        # END TODO
 
         results = []
 
@@ -56,10 +53,10 @@ def main():
             log_events,
             args=(log_queue, args.log_level)
         ))
-        from .workers.status_indicator import handle_events
+        from .workers.io import handle_io
         results.append(pool.apply_async(
-            handle_events,
-            args=(log_queue, event_queue)
+            handle_io,
+            args=(log_queue, event_queue, should_calibrate, should_observe)
         ))
         from .workers.watch_sky import watch_sky
         results.append(pool.apply_async(
@@ -69,16 +66,19 @@ def main():
         from .workers.spectrum import analyze_spectra
         results.append(pool.apply_async(
             analyze_spectra,
-            args=(log_queue, event_queue, should_calibrate, should_observe)
+            args=(log_queue, event_queue)
+        ))
+        from .workers.downlink import downlink
+        results.append(pool.apply_async(
+            downlink,
+            args=(log_queue, event_queue)
         ))
 #         from .transmit import transmit
 #         pool.apply_async(transmit, args=(event_queue,))
-#         from .downlink import downlink
-#         pool.apply_async(downlink, args=(event_queue,))
 
         try:
             while not any(result.ready() for result in results):
-                time.sleep(1)
+                time.sleep(settings.Wait.background)
         finally:
             pool.terminate()
 

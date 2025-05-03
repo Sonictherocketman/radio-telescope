@@ -12,7 +12,7 @@ class StatusLight:
     pins = {
         transmit: settings.TRANSMIT_STATUS_PIN,
         capture: settings.CAPTURE_STATUS_PIN,
-        downlink: settings.CAPTURE_STATUS_PIN,  # TODO
+        downlink: settings.DOWNLINK_STATUS_PIN,
         analysis: settings.SPECTRUM_STATUS_PIN,
         calibrate: settings.CALIBRATE_STATUS_PIN,
     }

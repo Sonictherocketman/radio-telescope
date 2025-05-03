@@ -1,16 +1,22 @@
 from datetime import datetime
 import os
 import time
-import pickle
+import shutil
 import tempfile
 
+import numpy as np
 from matplotlib import pyplot as plt
+from matplotlib import mlab
 
 from .. import settings
-from ..utils import iqdp
+from ..utils import iqd
+from ..models.lights import StatusLight
+from ..models.buffer import FixedBuffer
+from ..mpsafe import managed_status
 
 
 cache = {}
+signal_buffer = FixedBuffer(settings.SIGNAL_BUFFER_LENGTH)
 
 
 def setup(log):
@@ -19,21 +25,44 @@ def setup(log):
     return True
 
 
-def process_spectrum(observation, NFFT=1024):
-    values = plt.psd(
-        observation.signal,
-        NFFT=1024,
-        Fs=observation.sample_rate/1e6,
-        Fc=observation.frequency/1e6
-    )
-    plt.close()
-    return values
+def process_spectrum(observation, signal, c_signal, NFFT=1024):
+    Fc = observation.frequency / 1e6
+
+    if c_signal is not None:
+        pxx, freqs = mlab.csd(
+            signal,
+            c_signal,
+            NFFT=1024,
+            Fs=observation.sample_rate/1e6,
+        )
+        freqs += Fc
+    else:
+        pxx, freqs = mlab.psd(
+            signal,
+            NFFT=1024,
+            Fs=observation.sample_rate/1e6,
+        )
+
+    return pxx, freqs
 
 
-def plot_to_image(log, values, freq, observation):
+def plot_to_image(log, values, freq, observation, buff_percent):
     with tempfile.NamedTemporaryFile('wb+', suffix='.png') as f:
         log.put(('debug', f'Using NTF: {f.name}'))
-        plt.title(observation.identifier)
+
+        # TODO: Temp hack to remove DC offset spike
+        l = len(values)
+        center = l // 2
+        width = 4
+        values[center-width:center+width] = values[center-width:center+width] / (signal_buffer.length * 10)
+        # END HACK
+
+        title = observation.identifier
+        if observation.calibration:
+            title += ' (Calibrated)'
+        title += f' (Buffer {int(buff_percent*100)}%)'
+
+        plt.title(title)
         plt.plot(freq, values)
         plt.xlabel('Frequency (MHz)')
         plt.ylabel('Relative power (dB)')
@@ -47,7 +76,7 @@ def write_spectrum(
     log,
     observation,
     values,
-    cvalues,
+    c_values,
     freq,
     image,
     output_directory,
@@ -55,90 +84,91 @@ def write_spectrum(
     image_path = os.path.join(output_directory, f'{observation.identifier}.png')
     with open(image_path, 'wb') as f:
         f.write(image)
-    # TODO: write data
 
-
-
-
-def check_calibration(
-    log,
-    input_directory=settings.CALIBRATION_PATH,
-    output_directory=settings.CALIBRATION_PATH,
-):
-    check_observations(
-        log,
-        input_directory=input_directory,
-        output_directory=output_directory,
-        batch_size=1,
-    )
+    data_path = os.path.join(output_directory, f'{observation.identifier}.dat')
+    if c_values is not None:
+        data = np.array([freq, values, c_values])
+    else:
+        data = np.array([freq, values])
+    with open(data_path, 'wb') as f:
+        f.write(data.tobytes())
 
 
 def check_observations(
     log,
+    event_queue,
     input_directory=settings.CAPTURE_DATA_PATH,
     output_directory=settings.SPECTRUM_DATA_PATH,
     batch_size=settings.SPECTRUM_BATCH_SIZE,
 ):
-    files = [
+    config_files = [
         (os.path.join(input_directory, filename), filename)
         for filename in os.listdir(input_directory)
-        if filename.endswith('.iqdp')
+        if filename.endswith('.json')
     ]
 
     if not batch_size:
-        batch_size = len(files)
+        batch_size = len(config_files)
 
-    for path, filename in files[:batch_size]:
-        log.put(('info', f'Processing {filename}...'))
-        try:
-            observation = iqdp.read(path)
-        except pickle.PickleError as e:
-            log.put(('error', 'Unable to unpickle {filename}. Purging.'))
-            os.remove(path)
-            continue
+    for path, filename in config_files[:batch_size]:
+        with managed_status(event_queue, StatusLight.analysis):
+            log.put(('info', f'Processing {filename}...'))
+            try:
+                observation, get_signal, get_c_signal = iqd.read(path)
+            except Exception as e:
+                log.put(('error', f'Unable to fetch data for {filename}. {e=}. Purging.'))
+                continue
 
-        values, freq = process_spectrum(observation)
+            log.put(('info', f'Processing {observation.summary}'))
 
-        if calibration := observation.calibration:
-            if calibration.identifier not in cache:
-                log.put(('info', f'Processing uncached calibration: {calibration.identifier}'))
-                cache[calibration.identifier] = process_spectrum(calibration)
+            signal = get_signal()
 
-            cvalues, _ = cache[calibration.identifier]
-            # Subtract out the values for the calibration.
-            values -= cvalues
-        else:
-            cvalues = []
+            if calibration := observation.calibration:
+                c_signal = get_c_signal()
+            else:
+                c_signal = None
 
-        write_spectrum(
-            log,
-            observation,
-            values,
-            cvalues,
-            freq,
-            plot_to_image(log, values, freq, observation),
-            output_directory,
-        )
-        log.put(('info', f'Finished processing {filename}. Purging.'))
-        os.remove(path)
+            if len(c_signal) != len(signal):
+                log.put(('warning', f'Signal length differed from calibration length. Skipping...'))
+                iqd.remove(path)
+                continue
+
+            values, freq = process_spectrum(observation, signal, c_signal)
+            signal_buffer.add(values)
+            pxx = np.sum(signal_buffer.get_data(), axis=0)
+
+            write_spectrum(
+                log,
+                observation,
+                pxx,
+                None,
+                freq,
+                plot_to_image(log, pxx, freq, observation, signal_buffer.percent_full),
+                output_directory,
+            )
+            config_output_path = os.path.join(output_directory, os.path.basename(path))
+            shutil.copyfile(path, config_output_path)
+            log.put(('info', f'Finished processing {filename}. Purging.'))
+            iqd.remove(path)
 
 
-def loop(log):
-    check_observations(log)
+def loop(log, event_queue):
+    check_observations(log, event_queue)
 
 
-def analyze_spectra(log, *args):
+def analyze_spectra(log, event_queue):
     """ Continuously watch the sky and record values to disk. """
     if setup(log):
         log.put(('info', 'Analyzing spectra...'))
         try:
             while True:
                 log.put(('debug', 'Begin spectra iteration...'))
-                loop(log)
+                loop(log, event_queue)
                 log.put(('debug', 'End spectra iteration. Sleeping...'))
-                time.sleep(settings.STEP_DURATION_SECONDS)
+                time.sleep(settings.Wait.processing)
         except Exception as e:
             log.put(('error', f'Encountered error during analysis. {e}. Exiting...'))
+            event_queue.put((StatusLight.analysis, 'flash_error'))
     else:
         log.put(('error', 'Setup failed. Exiting.'))
 

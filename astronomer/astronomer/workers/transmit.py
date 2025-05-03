@@ -97,6 +97,6 @@ def transmit():
             logger.warning(f'Received error: {e}. Exiting...')
         finally:
             logger.debug('Ending transmission. Sleeping...')
-            time.sleep(settings.TRANSMIT_WAIT_SECONDS)
+            time.sleep(settings.Wait.background)
 
     logger.info('Done')
