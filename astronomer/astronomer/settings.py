@@ -99,7 +99,7 @@ TRANSMIT_REMOTE_HOST = os.environ.get(
 )
 TRANSMIT_REMOTE_USER = os.environ.get(
     'TRANSMIT_REMOTE_USER',
-    'brian'
+    'astronomer'
 )
 TRANSMIT_REMOTE_DIRECTORY = os.environ.get(
     'TRANSMIT_REMOTE_DIRECTORY',
