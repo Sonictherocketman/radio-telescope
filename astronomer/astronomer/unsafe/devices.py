@@ -16,6 +16,9 @@ class TestSDR:
     bandwidth = 1e6
     gain = 10
 
+    def set_bias_tee(self, value, device_index=0):
+        pass
+
     def test_device(self, n, delay=2):
         time.sleep(delay)
         return True

@@ -73,8 +73,12 @@ def main():
             downlink,
             args=(log_queue, event_queue)
         ))
-#         from .transmit import transmit
-#         pool.apply_async(transmit, args=(event_queue,))
+        from .workers.transmit import transmit
+        transmit(log_queue, event_queue)
+#         results.append(pool.apply_async(
+#             transmit,
+#             args=(log_queue, event_queue)
+#         ))
 
         try:
             while not any(result.ready() for result in results):

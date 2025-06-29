@@ -38,7 +38,7 @@ CAPTURE_STATUS_PIN = int(os.environ.get(
     25,
 ))
 
-CAPTURE_TEST_MODE_ENABLED = False  # TODO
+CAPTURE_TEST_MODE_ENABLED = True  # TODO
 
 CAPTURE_OBSERVE_INPUT_CHANNEL = 'observe' # TODO
 
@@ -82,16 +82,30 @@ HOME_API_HEALTH_CHECK_URL = os.environ.get(
     'HOME_API_HEALTH_CHECK_URL',
     urllib.parse.urljoin(HOME_URL, f'/api/telescope/{TELESCOPE_ID}/health-check'),
 )
-HOME_API_TRANSMIT_URL = os.environ.get(
-    'HOME_API_TRANSMIT_URL',
-    urllib.parse.urljoin(HOME_URL, f'/api/telescope/{TELESCOPE_ID}/transmit'),
-)
-TRANSMIT_BATCH_SIZE = 1_000
+TRANSMIT_BATCH_SIZE = 50
 
 TRANSMIT_STATUS_PIN = int(os.environ.get(
     'TRANSMIT_STATUS_PIN',
     23,
 ))
+
+DEFAULT_REQUEST_TIMEOUT = int(os.environ.get(
+    'DEFAULT_REQUEST_TIMEOUT',
+    10,
+))
+TRANSMIT_REMOTE_HOST = os.environ.get(
+    'TRANSMIT_REMOTE_HOST',
+    'starsweep.space'
+)
+TRANSMIT_REMOTE_USER = os.environ.get(
+    'TRANSMIT_REMOTE_USER',
+    'brian'
+)
+TRANSMIT_REMOTE_DIRECTORY = os.environ.get(
+    'TRANSMIT_REMOTE_DIRECTORY',
+    'data/'
+)
+
 
 # Downlink Settings
 
