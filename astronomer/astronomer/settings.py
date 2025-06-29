@@ -17,8 +17,6 @@ DATABASE_LOCATION = os.path.expanduser(os.environ.get(
     os.path.join(BASE_DIR, './db.sqlite'),
 ))
 
-TELESCOPE_ID = os.environ['TELESCOPE_ID']
-
 CALIBRATION_PATH = os.path.expanduser(os.environ.get(
     'CALIBRATION_PATH',
     os.path.join(BASE_DIR, './data/calibration'),
@@ -73,14 +71,13 @@ SPECTRUM_BATCH_SIZE = 10
 
 # Transmit Settings
 
-HOME_AUTHORIZATION_TOKEN = os.environ['HOME_AUTHORIZATION_TOKEN']
 HOME_URL = os.environ.get(
     'HOME_URL',
     'https://starsweep.space',
 )
 HOME_API_HEALTH_CHECK_URL = os.environ.get(
     'HOME_API_HEALTH_CHECK_URL',
-    urllib.parse.urljoin(HOME_URL, f'/api/telescope/{TELESCOPE_ID}/health-check'),
+    urllib.parse.urljoin(HOME_URL, '/'),
 )
 TRANSMIT_BATCH_SIZE = 50
 
@@ -111,11 +108,11 @@ TRANSMIT_REMOTE_DIRECTORY = os.environ.get(
 
 DOWNLINK_CONFIGURATION_URL = os.environ.get(
     'DOWNLINK_CONFIGURATION_URL',
-    urllib.parse.urljoin(HOME_URL, f'/api/telescope/{TELESCOPE_ID}/tasks'),
+    urllib.parse.urljoin(HOME_URL, '/'),
 )
 DOWNLINK_EVENT_STREAM_URL = os.environ.get(
     'DOWNLINK_EVENT_STREAM_URL',
-    urllib.parse.urljoin(HOME_URL, f'/api/events/TEL-{TELESCOPE_ID}'),
+    urllib.parse.urljoin(HOME_URL, '/'),
 )
 DOWNLINK_EVENT_STREAM_TIMEOUT = 30
 DOWNLINK_RECONNECT_SECONDS = 10
