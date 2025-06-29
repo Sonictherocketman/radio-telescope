@@ -128,7 +128,7 @@ def check_observations(
             else:
                 c_signal = None
 
-            if c_signal it not None and len(c_signal) != len(signal):
+            if c_signal is not None and len(c_signal) != len(signal):
                 log.put(('warning', f'Signal length differed from calibration length. Skipping...'))
                 iqd.remove(path)
                 continue
