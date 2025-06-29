@@ -23,5 +23,5 @@ def log_events(log, log_level):
             level, message = log.get()
             getattr(logger, level)(message)
         except Exception as e:
-            logger.error('[Log Worker] Unexpected exception: {e}')
+            logger.error(f'[Log Worker] Unexpected exception: {e}')
 
