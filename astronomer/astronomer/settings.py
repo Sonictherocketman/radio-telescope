@@ -17,8 +17,8 @@ DATABASE_LOCATION = os.path.expanduser(os.environ.get(
     os.path.join(BASE_DIR, './db.sqlite'),
 ))
 
-CALIBRATION_PATH = os.path.expanduser(os.environ.get(
-    'CALIBRATION_PATH',
+CALIBRATION_DATA_PATH = os.path.expanduser(os.environ.get(
+    'CALIBRATION_DATA_PATH',
     os.path.join(BASE_DIR, './data/calibration'),
 ))
 
@@ -27,7 +27,7 @@ CALIBRATE_STATUS_PIN = 24
 # Capture Settings
 
 CAPTURE_DATA_PATH = os.path.expanduser(os.environ.get(
-    'DATA_PATH',
+    'CAPTURE_DATA_PATH',
     os.path.join(BASE_DIR, './data/observations'),
 ))
 
@@ -57,7 +57,7 @@ WARM_UP_SAMPLES = CAPTURE_SAMPLE_SIZE
 # Spectrum Settings
 
 SPECTRUM_DATA_PATH = os.path.expanduser(os.environ.get(
-    'DATA_PATH',
+    'SPECTRUM_DATA_PATH',
     os.path.join(BASE_DIR, './data/spectra'),
 ))
 

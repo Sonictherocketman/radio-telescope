@@ -37,7 +37,7 @@ def setup(log, event_queue, test_mode=False, bias_tee=False):
 
     # Setup data directories
     os.makedirs(settings.CAPTURE_DATA_PATH, exist_ok=True)
-    os.makedirs(settings.CALIBRATION_PATH, exist_ok=True)
+    os.makedirs(settings.CALIBRATION_DATA_PATH, exist_ok=True)
 
     # Test SDR Connection
     with managed_status(
@@ -81,7 +81,7 @@ def take_calibration_reading(log, *args, c_ext=CALIBRATION_FILE_EXTENSION, **kwa
     observation, signal_path = take_reading(
         log,
         *args,
-        directory=settings.CALIBRATION_PATH,
+        directory=settings.CALIBRATION_DATA_PATH,
         signal_ext=c_ext,
         use_calibration=False,
         **kwargs,
