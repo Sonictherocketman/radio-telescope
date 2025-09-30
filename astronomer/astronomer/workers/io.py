@@ -1,3 +1,5 @@
+import os
+
 from .. import settings
 from ..models.lights import StatusLight
 from ..unsafe.io import register_event_callback, setup_dummy_server, IS_TEST_MODE, Light
@@ -62,6 +64,7 @@ def handle_io(log, event_queue, should_calibrate, should_observe):
     )
 
     log.put(('info', '[I/O] Listening...'))
+    log.put(('info', f'[I/O] pid: {os.getpid()} [P: {os.getppid()}]'))
     while True:
         kind, name, value = event_queue.get()
         if kind == 'light':

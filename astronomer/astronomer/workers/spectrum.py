@@ -160,6 +160,7 @@ def analyze_spectra(log, event_queue):
     """ Continuously watch the sky and record values to disk. """
     if setup(log):
         log.put(('info', 'Analyzing spectra...'))
+        log.put(('info', f'[Spectra] pid: {os.getpid()} [P: {os.getppid()}]'))
         try:
             while True:
                 log.put(('debug', 'Begin spectra iteration...'))

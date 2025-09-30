@@ -185,6 +185,7 @@ def watch_sky(log, event_queue, should_calibrate, should_observe):
     """ Continuously watch the sky and record values to disk. """
     if setup(log, event_queue, settings.CAPTURE_TEST_MODE_ENABLED):
         try:
+            log.put(('info', f'[WatchSky] pid: {os.getpid()} [P: {os.getppid()}]'))
             with managed_status(event_queue, StatusLight.capture):
                 warm_up(
                     log,

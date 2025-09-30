@@ -1,4 +1,5 @@
 import logging
+import os
 import sys
 
 
@@ -18,6 +19,7 @@ def log_events(log, log_level):
     )
 
     logger.info('[Log Worker] Listening...')
+    log.put(('info', f'[Log Worker] pid: {os.getpid()} [P: {os.getppid()}]'))
     while True:
         try:
             level, message = log.get()

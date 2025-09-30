@@ -98,6 +98,7 @@ def transmit(log, event_queue):
         time.sleep(settings.Wait.background)
 
     while True:
+        log.put(('info', f'[Transmit] pid: {os.getpid()} [P: {os.getppid()}]'))
         log.put(('debug', 'Beginning transmission...'))
         try:
             loop(log, event_queue)

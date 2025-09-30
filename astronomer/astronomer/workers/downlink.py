@@ -1,3 +1,4 @@
+import os
 import time
 
 import httpx
@@ -42,6 +43,7 @@ def downlink(log, event_queue):
 #     connection = db.setup_and_connect()
 
     log.put(('info', 'Beginning downlink from host...'))
+    log.put(('info', f'downlink pid: {os.getpid()} [P: {os.getppid()}]'))
 
     while True:
         with managed_status(event_queue, StatusLight.downlink) as light:
