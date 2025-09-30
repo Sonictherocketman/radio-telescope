@@ -92,6 +92,8 @@ class RTLSDR:
             shell=True,
             capture_output=True,
             cwd=settings.CAPTURE_DATA_PATH,
+            check=True,
+            # TODO: These go on forever sometimes and return anyway. Check return?
         )
 
 

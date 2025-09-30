@@ -193,7 +193,7 @@ def watch_sky(log, event_queue, should_calibrate, should_observe):
                     settings.CAPTURE_GAIN,
                     settings.CAPTURE_BANDWIDTH,
                 )
-            log.put(('info', 'Capturing data...'))
+            log.put(('info', 'Ready...'))
             while True:
                 log.put(('debug', 'Begin data capture iteration...'))
                 loop(log, event_queue, should_calibrate, should_observe)

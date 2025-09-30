@@ -10,6 +10,10 @@ from . import settings
 logger = logging.getLogger('astronomer')
 
 
+def log_child_exception(e):
+    logger.error(f'Child exception detected: {e}')
+
+
 def main():
     parser = argparse.ArgumentParser(
         'astronomer',
@@ -51,38 +55,45 @@ def main():
         from .workers.logger import log_events
         results.append(pool.apply_async(
             log_events,
-            args=(log_queue, args.log_level)
+            args=(log_queue, args.log_level),
+            error_callback=log_child_exception,
         ))
         from .workers.io import handle_io
         results.append(pool.apply_async(
             handle_io,
-            args=(log_queue, event_queue, should_calibrate, should_observe)
+            args=(log_queue, event_queue, should_calibrate, should_observe),
+            error_callback=log_child_exception,
         ))
         from .workers.watch_sky import watch_sky
         results.append(pool.apply_async(
             watch_sky,
-            args=(log_queue, event_queue, should_calibrate, should_observe)
+            args=(log_queue, event_queue, should_calibrate, should_observe),
+            error_callback=log_child_exception,
         ))
         from .workers.spectrum import analyze_spectra
         results.append(pool.apply_async(
             analyze_spectra,
-            args=(log_queue, event_queue)
+            args=(log_queue, event_queue),
+            error_callback=log_child_exception,
         ))
         from .workers.downlink import downlink
         results.append(pool.apply_async(
             downlink,
-            args=(log_queue, event_queue)
+            args=(log_queue, event_queue),
+            error_callback=log_child_exception,
         ))
         from .workers.transmit import transmit
         results.append(pool.apply_async(
             transmit,
-            args=(log_queue, event_queue)
+            args=(log_queue, event_queue),
+            error_callback=log_child_exception,
         ))
 
         try:
             while not any(result.ready() for result in results):
                 time.sleep(settings.Wait.background)
         finally:
-            pool.terminate()
+            # Terminate and other stuff is called by the pool.
+            pass
 
         logger.error('Process error with unknown child.')
