@@ -102,6 +102,8 @@ class RTLSDR:
         except Exception as e:
             if process:
                 process.send_signal(signal.SIGINT)
+                time.sleep(1)
+                process.send_signal(signal.SIGINT)
             try:
                 process.wait(timeout=1)
             except TimeoutExpired:
