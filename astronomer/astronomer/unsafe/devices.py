@@ -2,7 +2,7 @@ from contextlib import contextmanager
 import math
 import random
 import signal
-from subprocess import run, Popen, CalledProcessError
+from subprocess import run, Popen, CalledProcessError, TimeoutExpired
 import time
 
 import numpy as np
@@ -102,6 +102,11 @@ class RTLSDR:
         except Exception as e:
             if process:
                 process.send_signal(signal.SIGINT)
+            try:
+                process.wait(timeout=1)
+            except TimeoutExpired:
+                process.terminate()
+
             raise e
 
 
