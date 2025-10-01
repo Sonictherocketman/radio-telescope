@@ -10,8 +10,8 @@ from . import settings
 logger = logging.getLogger('astronomer')
 
 
-def log_child_exception(e):
-    logger.error(f'Child exception detected: {e}')
+def get_child_exception_logger(prefix: str):
+    return lambda e: logger.error(f'[{prefix}] Child exception detected: {e}')
 
 
 def main():
@@ -62,31 +62,31 @@ def main():
         results.append(pool.apply_async(
             handle_io,
             args=(log_queue, event_queue, should_calibrate, should_observe),
-            error_callback=log_child_exception,
+            error_callback=get_child_exception_logger('I/O'),
         ))
         from .workers.watch_sky import watch_sky
         results.append(pool.apply_async(
             watch_sky,
             args=(log_queue, event_queue, should_calibrate, should_observe),
-            error_callback=log_child_exception,
+            error_callback=get_child_exception_logger('WatchSky'),
         ))
         from .workers.spectrum import analyze_spectra
         results.append(pool.apply_async(
             analyze_spectra,
             args=(log_queue, event_queue),
-            error_callback=log_child_exception,
+            error_callback=get_child_exception_logger('Spectra'),
         ))
         from .workers.downlink import downlink
         results.append(pool.apply_async(
             downlink,
             args=(log_queue, event_queue),
-            error_callback=log_child_exception,
+            error_callback=get_child_exception_logger('Downlink'),
         ))
         from .workers.transmit import transmit
         results.append(pool.apply_async(
             transmit,
             args=(log_queue, event_queue),
-            error_callback=log_child_exception,
+            error_callback=get_child_exception_logger('Transmit'),
         ))
 
         try:
