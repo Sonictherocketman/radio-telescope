@@ -169,7 +169,7 @@ def analyze_spectra(log, event_queue):
                 time.sleep(settings.Wait.processing)
         except Exception as e:
             log.put(('error', f'Encountered error during analysis. {e}. Exiting...'))
-            event_queue.put((StatusLight.analysis, 'flash_error'))
+            event_queue.put(('light', StatusLight.analysis, 'flash_error'))
     else:
         log.put(('error', 'Setup failed. Exiting.'))
 

@@ -66,7 +66,12 @@ def handle_io(log, event_queue, should_calibrate, should_observe):
     log.put(('info', '[I/O] Listening...'))
     log.put(('info', f'[I/O] pid: {os.getpid()} [P: {os.getppid()}]'))
     while True:
-        kind, name, value = event_queue.get()
+        try:
+            kind, name, value = event_queue.get()
+        except ValueError as e:
+            log.put(('error', f'Malformed event. Wrong number of values: {e}'))
+            continue
+
         if kind == 'light':
             log.put(('debug', f'[I/O] {kind}({name=}, {value=})'))
             process_light(name, value, lights, log)

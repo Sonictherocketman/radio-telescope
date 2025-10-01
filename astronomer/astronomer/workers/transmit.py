@@ -76,12 +76,12 @@ def loop(
                 f'Status Code: {e.returncode} '
                 f'Exception thrown during transmision: {e}'
             ))
-            event_queue.put((StatusLight.transmit, 'flash_error'))
+            event_queue.put(('light', StatusLight.transmit, 'flash_error'))
         else:
             for path in associated_files:
                 os.remove(path)
             log.put(('info', 'Transmission complete.'))
-            event_queue.put((StatusLight.analysis, 'flash_ok'))
+            event_queue.put(('light', StatusLight.analysis, 'flash_ok'))
 
         # Sleep for a while to not overload the server.
         time.sleep(random.randint(0, 10))
