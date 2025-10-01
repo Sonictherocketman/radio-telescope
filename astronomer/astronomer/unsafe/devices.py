@@ -1,7 +1,8 @@
 from contextlib import contextmanager
 import math
 import random
-from subprocess import run, Popen, CalledProcessError, check_call
+import signal
+from subprocess import run, Popen, CalledProcessError
 import time
 
 import numpy as np
@@ -100,7 +101,7 @@ class RTLSDR:
                 raise CalledProcessError(process.returncode, command)
         except Exception as e:
             if process:
-                process.terminate()
+                process.send_signal(signal.SIGINT)
             raise e
 
 
