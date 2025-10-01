@@ -101,6 +101,11 @@ class RTLSDR:
                 raise CalledProcessError(process.returncode, command)
         except Exception as e:
             if process:
+                # The command line implementation of rtl_sdr requires a double
+                # SIGINT to close everything off properly. The first is an
+                # orderly shutdown but the second speeds things up but still
+                # ensures that the FDs are closed properly so it can all
+                # be reopened later.
                 process.send_signal(signal.SIGINT)
                 time.sleep(1)
                 process.send_signal(signal.SIGINT)

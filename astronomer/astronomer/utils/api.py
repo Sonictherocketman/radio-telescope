@@ -26,8 +26,9 @@ def upload_observation(
     target=settings.TRANSMIT_REMOTE_DIRECTORY,
 ):
     run(
-        shlex.split(f"scp -C '{path}' '{user}@{host}:{target}'"),
+        f"scp -C '{path}' '{user}@{host}:{target}'",
         check=True,
+        shell=True,
         capture_output=True,
         timeout=timeout,
     )
