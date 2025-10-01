@@ -89,6 +89,7 @@ def loop(
 
 def transmit(log, event_queue):
     """ Search the given spectrum data path and upload whatever is found there. """
+    log.put(('info', f'[Transmit] pid: {os.getpid()} [P: {os.getppid()}]'))
     while not ping_home(log):
         log.put((
             'error',
@@ -98,7 +99,6 @@ def transmit(log, event_queue):
         time.sleep(settings.Wait.background)
 
     while True:
-        log.put(('info', f'[Transmit] pid: {os.getpid()} [P: {os.getppid()}]'))
         log.put(('debug', 'Beginning transmission...'))
         try:
             loop(log, event_queue)
