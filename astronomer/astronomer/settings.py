@@ -100,7 +100,7 @@ TRANSMIT_REMOTE_USER = os.environ.get(
 )
 TRANSMIT_REMOTE_DIRECTORY = os.environ.get(
     'TRANSMIT_REMOTE_DIRECTORY',
-    'data/'
+    '/opt/starsweep.space/data/raw/'
 )
 
 
