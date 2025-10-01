@@ -56,7 +56,7 @@ def main():
         results.append(pool.apply_async(
             log_events,
             args=(log_queue, args.log_level),
-            error_callback=log_child_exception,
+            error_callback=get_child_exception_logger('Logger'),
         ))
         from .workers.io import handle_io
         results.append(pool.apply_async(
