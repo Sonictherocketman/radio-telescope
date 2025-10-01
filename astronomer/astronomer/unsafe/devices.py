@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 import math
 import random
-from subprocess import run, CalledProcessError
+from subprocess import run, Popen, CalledProcessError, check_call
 import time
 
 import numpy as np
@@ -50,7 +50,7 @@ class RTLSDR:
     def test_device(self, n=10, device_index=0):
         try:
             self.read_samples('/dev/null', n, device_index=device_index)
-        except CalledProcessError as e:
+        except CalledProcessError:
             return False
         else:
             return True
@@ -87,18 +87,21 @@ class RTLSDR:
                 -n {n} \
                 {destination_path}
         """
-        process = Popen(
-            command,
-            shell=True,
-            capture_output=True,
-            cwd=settings.CAPTURE_DATA_PATH,
-            check=True,
-            # TODO: These go on forever sometimes and return anyway. Check return?
-        )
+        process = None
         try:
+            process = Popen(
+                command,
+                shell=True,
+                cwd=settings.CAPTURE_DATA_PATH,
+                # TODO: These go on forever sometimes and return anyway. Check return?
+            )
             process.wait()
-        except Exception:
-            process.terminate()
+            if process.returncode:
+                raise CalledProcessError(process.returncode, command)
+        except Exception as e:
+            if process:
+                process.terminate()
+            raise e
 
 
 class DefaultDevice:
