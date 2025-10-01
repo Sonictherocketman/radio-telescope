@@ -87,7 +87,7 @@ class RTLSDR:
                 -n {n} \
                 {destination_path}
         """
-        return run(
+        process = Popen(
             command,
             shell=True,
             capture_output=True,
@@ -95,6 +95,10 @@ class RTLSDR:
             check=True,
             # TODO: These go on forever sometimes and return anyway. Check return?
         )
+        try:
+            process.wait()
+        except Exception:
+            process.terminate()
 
 
 class DefaultDevice:
