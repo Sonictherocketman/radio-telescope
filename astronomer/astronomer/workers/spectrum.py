@@ -46,16 +46,14 @@ def process_spectrum(observation, signal, c_signal, NFFT=1024):
     return pxx, freqs
 
 
+def rolling_mean(x, window_length):
+    # https://stackoverflow.com/a/22621523/12131013
+    return np.convolve(x, np.ones(window_length) / window_length, mode='same')
+
+
 def plot_to_image(log, values, freq, observation, buff_percent):
     with tempfile.NamedTemporaryFile('wb+', suffix='.png') as f:
         log.put(('debug', f'Using NTF: {f.name}'))
-
-        # TODO: Temp hack to remove DC offset spike
-        l = len(values)
-        center = l // 2
-        width = 4
-        values[center-width:center+width] = values[center-width:center+width] / (signal_buffer.length * 10)
-        # END HACK
 
         title = observation.identifier
         if observation.calibration:
@@ -100,6 +98,7 @@ def check_observations(
     input_directory=settings.CAPTURE_DATA_PATH,
     output_directory=settings.SPECTRUM_DATA_PATH,
     batch_size=settings.SPECTRUM_BATCH_SIZE,
+    smoothing_window=settings.SMOOTHING_WINDOW_LENGTH,
 ):
     config_files = [
         (os.path.join(input_directory, filename), filename)
@@ -133,17 +132,26 @@ def check_observations(
                 iqd.remove(path)
                 continue
 
+            # TODO: The buffer should be cleared once a new calibration is done.
+            # The buffer needs a calibration identifier so that once a new
+            # calibration is done, the buffer is empty. Or the buffer is multi-
+            # keyed for each calibration. Then consider how to clear them
+            # once the calibration is not useful anymore.
+            # Perhaps removed from the cal-directory?
+
             values, freq = process_spectrum(observation, signal, c_signal)
             signal_buffer.add(values)
             pxx = np.sum(signal_buffer.get_data(), axis=0)
+            smoothed = rolling_mean(pxx, smoothing_window)
 
             write_spectrum(
                 log,
                 observation,
+                # TODO: Do we want the smoothed data in the chart or just the data?
                 pxx,
                 None,
                 freq,
-                plot_to_image(log, pxx, freq, observation, signal_buffer.percent_full),
+                plot_to_image(log, smoothed, freq, observation, signal_buffer.percent_full),
                 output_directory,
             )
             config_output_path = os.path.join(output_directory, os.path.basename(path))
