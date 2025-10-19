@@ -142,16 +142,15 @@ def check_observations(
             values, freq = process_spectrum(observation, signal, c_signal)
             signal_buffer.add(values)
             pxx = np.sum(signal_buffer.get_data(), axis=0)
-            smoothed = rolling_mean(pxx, smoothing_window)
+            # smoothed = rolling_mean(pxx, smoothing_window)
 
             write_spectrum(
                 log,
                 observation,
-                # TODO: Do we want the smoothed data in the chart or just the data?
                 pxx,
                 None,
                 freq,
-                plot_to_image(log, smoothed, freq, observation, signal_buffer.percent_full),
+                plot_to_image(log, pxx, freq, observation, signal_buffer.percent_full),
                 output_directory,
             )
             config_output_path = os.path.join(output_directory, os.path.basename(path))
