@@ -76,7 +76,7 @@ def register_event_callback(
     if GPIO:
         if method is None:
             method = GPIO.RISING
-        GPIO.setup(channel, GPIO.IN)
+        GPIO.setup(channel, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         GPIO.add_event_detect(
             channel,
             method,
