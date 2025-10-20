@@ -55,6 +55,13 @@ def plot_to_image(log, values, freq, observation, buff_percent):
     with tempfile.NamedTemporaryFile('wb+', suffix='.png') as f:
         log.put(('debug', f'Using NTF: {f.name}'))
 
+        # TODO: Temp hack to remove DC offset spike
+        l = len(values)
+        center = l // 2
+        width = 4
+        values[center-width:center+width] = values[center-width:center+width] / (signal_buffer.length * 10)
+        # END HACK
+
         title = observation.identifier
         if observation.calibration:
             title += ' (Calibrated)'
