@@ -133,7 +133,7 @@ class Light:
     def on(self):
         if GPIO:
             GPIO.output(self.pin, GPIO.HIGH)
-            logger.debug(f'[GPIO Unavailable] Pin {self.pin} on.')
+            logger.debug(f'[GPIO Available] Pin {self.pin} on.')
         else:
             dummy_socket_send(f'{self.pin}-1'.encode('ascii'))
             logger.warning(f'[GPIO Unavailable] Pin {self.pin} on.')
@@ -141,7 +141,7 @@ class Light:
     def off(self):
         if GPIO:
             GPIO.output(self.pin, GPIO.LOW)
-            logger.debug(f'[GPIO Unavailable] Pin {self.pin} off.')
+            logger.debug(f'[GPIO Available] Pin {self.pin} off.')
         else:
             dummy_socket_send(f'{self.pin}-0'.encode('ascii'))
             logger.warning(f'[GPIO Unavailable] Pin {self.pin} off.')
