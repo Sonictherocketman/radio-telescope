@@ -1,7 +1,7 @@
-import logging
+from multiprocessing import get_logger
 
 
-logger = logging.getLogger('astronomer')
+logger = get_logger()
 
 
 class _State:

@@ -3,6 +3,7 @@ import logging
 import os
 import os.path
 import json
+from multiprocessing import get_logger
 import random
 import shutil
 from subprocess import CalledProcessError
@@ -16,9 +17,11 @@ from ..mpsafe import managed_status
 from ..models.lights import StatusLight
 
 
-def ping_home(log):
-    log.put(('debug', f'Attempting to ping {settings.HOME_API_HEALTH_CHECK_URL}...'))
-    return True # TODO
+logger = get_logger()
+
+
+def ping_home():
+    logger.debug(f'Attempting to ping {settings.HOME_API_HEALTH_CHECK_URL}...')
     try:
         return api.health_check()
     except Exception:
@@ -26,7 +29,6 @@ def ping_home(log):
 
 
 def loop(
-    log,
     event_queue,
     batch_size=settings.TRANSMIT_BATCH_SIZE,
     total_associated_files_per_sample=3,
@@ -38,18 +40,18 @@ def loop(
     ]
 
     if not files:
-        log.put(('debug', 'No data files found.'))
+        logger.debug('No data files found.')
         return
 
     batch = files[:batch_size]
-    log.put(('info', f'Found {len(files)} total to transmit. Uploading {len(batch)}.'))
+    logger.info(f'Found {len(files)} total to transmit. Uploading {len(batch)}.')
     for path in batch:
         with open(path) as f:
             config = json.load(f)
 
         identifier = config.get('identifier', None)
         if not identifier:
-            log.put(('error', 'Found malformed data config. Purging...'))
+            logger.error('Found malformed data config. Purging...')
             os.remove(path)
             continue
 
@@ -62,50 +64,48 @@ def loop(
         ]
 
         if len(associated_files) != total_associated_files_per_sample:
-            log.put(('error', 'Found malformed sample. Uploading partial data.'))
+            logger.error('Found malformed sample. Uploading partial data.')
 
-        log.put(('info', f'Transmitting sample ({identifier}) to remote host...'))
+        logger.info(f'Transmitting sample ({identifier}) to remote host...')
         try:
             for path in associated_files:
                 with managed_status(event_queue, StatusLight.transmit):
                     api.upload_observation(path)
         except CalledProcessError as e:
-            log.put((
-                'warning',
+            logger.warning(
                 f'Transmission failure: {path}. '
                 f'Status Code: {e.returncode} '
                 f'Exception thrown during transmision: {e}'
-            ))
+            )
             event_queue.put(('light', StatusLight.transmit, 'flash_error'))
         else:
             for path in associated_files:
                 os.remove(path)
-            log.put(('info', 'Transmission complete.'))
+            logger.info('Transmission complete.')
             event_queue.put(('light', StatusLight.analysis, 'flash_ok'))
 
         # Sleep for a while to not overload the server.
         time.sleep(random.randint(0, 10))
 
 
-def transmit(log, event_queue):
+def transmit(event_queue):
     """ Search the given spectrum data path and upload whatever is found there. """
-    log.put(('info', f'[Transmit] pid: {os.getpid()} [P: {os.getppid()}]'))
-    while not ping_home(log):
-        log.put((
-            'error',
+    logger.info(f'[Transmit] pid: {os.getpid()} [P: {os.getppid()}]')
+    while not ping_home():
+        logger.error(
             'Unable to ping home. Are you sure there is internet? '
             f'Will try again in {settings.Wait.background} '
-        ))
+        )
         time.sleep(settings.Wait.background)
 
     while True:
-        log.put(('debug', 'Beginning transmission...'))
+        logger.debug('Beginning transmission...')
         try:
-            loop(log, event_queue)
+            loop(event_queue)
         except Exception as e:
-            log.put(('warning', f'Received error: {e}. Retrying...'))
+            logger.warning(f'Received error: {e}. Retrying...')
         finally:
-            log.put(('debug', 'Ending transmission. Sleeping...'))
+            logger.debug('Ending transmission. Sleeping...')
         time.sleep(settings.Wait.background)
 
-    log.put(('info', 'Done'))
+    logger.info('Done')

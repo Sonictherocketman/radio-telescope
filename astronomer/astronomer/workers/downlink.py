@@ -1,3 +1,4 @@
+from multiprocessing import get_logger
 import os
 import time
 
@@ -7,6 +8,9 @@ from .. import settings
 from ..models.lights import StatusLight
 from ..mpsafe import managed_status
 from ..utils import api
+
+
+logger = get_logger()
 
 
 # def configure(*args):
@@ -38,20 +42,20 @@ def check_config():
     api.health_check()
 
 
-def downlink(log, event_queue):
+def downlink(event_queue):
 #     global connection
 #     connection = db.setup_and_connect()
 
-    log.put(('info', 'Beginning downlink from host...'))
-    log.put(('info', f'downlink pid: {os.getpid()} [P: {os.getppid()}]'))
+    logger.info('Beginning downlink from host...')
+    logger.info(f'downlink pid: {os.getpid()} [P: {os.getppid()}]')
 
     while True:
         with managed_status(event_queue, StatusLight.downlink) as light:
-            log.put(('info', 'Checking remote configuration...'))
+            logger.info('Checking remote configuration...')
             try:
                 check_config()
             except Exception as e:
                 light('flash_error')
-                log.put(('error', f'Downlink error: {e}.'))
+                logger.error(f'Downlink error: {e}.')
 
         time.sleep(settings.Wait.background)

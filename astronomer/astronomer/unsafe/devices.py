@@ -96,6 +96,7 @@ class RTLSDR:
                 cwd=settings.CAPTURE_DATA_PATH,
                 # TODO: These go on forever sometimes and return anyway. Check return?
             )
+            # TODO: Consider a timeout here higher than it could possibly be normally hit
             process.wait()
             if process.returncode:
                 raise CalledProcessError(process.returncode, command)

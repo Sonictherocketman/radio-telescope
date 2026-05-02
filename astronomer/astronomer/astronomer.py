@@ -1,13 +1,26 @@
 import argparse
 import logging
-from multiprocessing import Manager, Pool
+from multiprocessing import Manager, Pool, get_logger
 import sys
 import time
 
 from . import settings
 
 
-logger = logging.getLogger('astronomer')
+logger = get_logger()
+
+
+def _configure_logger(log_level):
+    formatter = logging.Formatter(fmt='%(asctime)s [%(levelname)s]: %(message)s')
+    worker_logger = get_logger()
+    if not worker_logger.handlers:
+        file_handler = logging.FileHandler('astronomer.log')
+        file_handler.setFormatter(formatter)
+        worker_logger.addHandler(file_handler)
+        stream_handler = logging.StreamHandler(sys.stdout)
+        stream_handler.setFormatter(formatter)
+        worker_logger.addHandler(stream_handler)
+    worker_logger.setLevel(log_level)
 
 
 def get_child_exception_logger(prefix: str):
@@ -30,21 +43,14 @@ def main():
     )
 
     args = parser.parse_args()
-    logging.basicConfig(
-        format='%(asctime)s [%(levelname)s]: %(message)s',
-        encoding='utf-8',
-        handlers=(
-            logging.FileHandler('astronomer.log'),
-            logging.StreamHandler(sys.stdout)
-        ),
-        level=args.log_level,
-    )
+
+    _configure_logger(args.log_level)
+    logger.propagate = True
 
     # Kick off children
 
-    with Manager() as manager, Pool(7) as pool:
+    with Manager() as manager, Pool(7, initializer=_configure_logger, initargs=(args.log_level,)) as pool:
         logger.debug('Configuring shared state...')
-        log_queue = manager.Queue()
         event_queue = manager.Queue()
         should_calibrate = manager.Event()
         should_observe = manager.Event()
@@ -52,40 +58,34 @@ def main():
         results = []
 
         logger.info('Starting child processes...')
-        from .workers.logger import log_events
-        results.append(pool.apply_async(
-            log_events,
-            args=(log_queue, args.log_level),
-            error_callback=get_child_exception_logger('Logger'),
-        ))
         from .workers.io import handle_io
         results.append(pool.apply_async(
             handle_io,
-            args=(log_queue, event_queue, should_calibrate, should_observe),
+            args=(event_queue, should_calibrate, should_observe),
             error_callback=get_child_exception_logger('I/O'),
         ))
         from .workers.watch_sky import watch_sky
         results.append(pool.apply_async(
             watch_sky,
-            args=(log_queue, event_queue, should_calibrate, should_observe),
+            args=(event_queue, should_calibrate, should_observe),
             error_callback=get_child_exception_logger('WatchSky'),
         ))
         from .workers.spectrum import analyze_spectra
         results.append(pool.apply_async(
             analyze_spectra,
-            args=(log_queue, event_queue),
+            args=(event_queue,),
             error_callback=get_child_exception_logger('Spectra'),
         ))
         from .workers.downlink import downlink
         results.append(pool.apply_async(
             downlink,
-            args=(log_queue, event_queue),
+            args=(event_queue,),
             error_callback=get_child_exception_logger('Downlink'),
         ))
         from .workers.transmit import transmit
         results.append(pool.apply_async(
             transmit,
-            args=(log_queue, event_queue),
+            args=(event_queue,),
             error_callback=get_child_exception_logger('Transmit'),
         ))
 

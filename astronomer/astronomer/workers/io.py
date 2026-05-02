@@ -1,3 +1,4 @@
+from multiprocessing import get_logger
 import os
 
 from .. import settings
@@ -5,7 +6,10 @@ from ..models.lights import StatusLight
 from ..unsafe.io import register_event_callback, setup_dummy_server, IS_TEST_MODE, Light
 
 
-def process_light(name, value, lights, log):
+logger = get_logger()
+
+
+def process_light(name, value, lights):
     if value is True:
         method = 'on'
     elif value is False:
@@ -16,12 +20,12 @@ def process_light(name, value, lights, log):
     try:
         getattr(lights[name], method)()
     except KeyError:
-        log.put(('warn', f'No method on light found for method: {method}'))
+        logger.warn(f'No method on light found for method: {method}')
 
 
-def handle_io(log, event_queue, should_calibrate, should_observe):
+def handle_io(event_queue, should_calibrate, should_observe):
     """ Handle status events for toggling lights/sounds and button input. """
-    log.put(('info', '[I/O] Configuring status indicators...'))
+    logger.info('[I/O] Configuring status indicators...')
 
     # Lights
 
@@ -30,16 +34,16 @@ def handle_io(log, event_queue, should_calibrate, should_observe):
         for name, pin in StatusLight.pins.items()
     }
 
-    log.put(('info', '[I/O] Configuring input triggers...'))
+    logger.info('[I/O] Configuring input triggers...')
 
     if IS_TEST_MODE:
-        log.put(('info', '[I/O] Setting up dummy test server...'))
+        logger.info('[I/O] Setting up dummy test server...')
         setup_dummy_server()
 
     # Calibrate
 
     def set_should_calibrate(*args):
-        log.put(('debug', '[I/O] Calibrate command detected.'))
+        logger.info('[I/O] Calibrate command detected.')
         should_calibrate.set()
 
     register_event_callback(
@@ -50,7 +54,7 @@ def handle_io(log, event_queue, should_calibrate, should_observe):
     # Observe
 
     def toggle_should_observe(*args):
-        log.put(('debug', '[I/O] Toggle observe command detected.'))
+        logger.debug('[I/O] Toggle observe command detected.')
         if should_observe.is_set():
             should_observe.clear()
         else:
@@ -63,18 +67,18 @@ def handle_io(log, event_queue, should_calibrate, should_observe):
         toggle_should_observe,
     )
 
-    log.put(('info', '[I/O] Listening...'))
-    log.put(('info', f'[I/O] pid: {os.getpid()} [P: {os.getppid()}]'))
+    logger.info('[I/O] Listening...')
+    logger.info(f'[I/O] pid: {os.getpid()} [P: {os.getppid()}]')
     while True:
         try:
             kind, name, value = event_queue.get()
         except ValueError as e:
-            log.put(('error', f'Malformed event. Wrong number of values: {e}'))
+            logger.error(f'Malformed event. Wrong number of values: {e}')
             continue
 
         if kind == 'light':
-            log.put(('debug', f'[I/O] {kind}({name=}, {value=})'))
-            process_light(name, value, lights, log)
+            logger.debug(f'[I/O] {kind}({name=}, {value=})')
+            process_light(name, value, lights)
         else:
-            log.put(('warn', f'[I/O] Unknown Event: {kind}({name=}, {value=})'))
+            logger.warn(f'[I/O] Unknown Event: {kind}({name=}, {value=})')
 

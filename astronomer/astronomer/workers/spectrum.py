@@ -1,4 +1,6 @@
+from collections import defaultdict
 from datetime import datetime
+from multiprocessing import get_logger
 import os
 import time
 import shutil
@@ -15,32 +17,36 @@ from ..models.buffer import FixedBuffer
 from ..mpsafe import managed_status
 
 
+logger = get_logger()
+
+
 cache = {}
-signal_buffer = FixedBuffer(settings.SIGNAL_BUFFER_LENGTH)
+signal_buffers = defaultdict(lambda: FixedBuffer(settings.SIGNAL_BUFFER_LENGTH))
+default_identifier = 'default'
 
 
-def setup(log):
+def setup():
     os.makedirs(settings.CAPTURE_DATA_PATH, exist_ok=True)
     os.makedirs(settings.SPECTRUM_DATA_PATH, exist_ok=True)
     return True
 
 
-def process_spectrum(observation, signal, c_signal, NFFT=1024):
-    Fc = observation.frequency / 1e6
+def process_spectrum(observation, signal, c_signal, NFFT=1024, pad=1e6):
+    Fc = observation.frequency / pad
 
     if c_signal is not None:
         pxx, freqs = mlab.csd(
             signal,
             c_signal,
-            NFFT=1024,
-            Fs=observation.sample_rate/1e6,
+            NFFT=NFFT,
+            Fs=observation.sample_rate / pad,
         )
         freqs += Fc
     else:
         pxx, freqs = mlab.psd(
             signal,
-            NFFT=1024,
-            Fs=observation.sample_rate/1e6,
+            NFFT=NFFT,
+            Fs=observation.sample_rate / pad,
         )
 
     return pxx, freqs
@@ -51,15 +57,18 @@ def rolling_mean(x, window_length):
     return np.convolve(x, np.ones(window_length) / window_length, mode='same')
 
 
-def plot_to_image(log, values, freq, observation, buff_percent):
+def plot_to_image(values, freq, observation, buff_percent):
     with tempfile.NamedTemporaryFile('wb+', suffix='.png') as f:
-        log.put(('debug', f'Using NTF: {f.name}'))
+        logger.debug(f'Using NTF: {f.name}')
 
         # TODO: Temp hack to remove DC offset spike
         l = len(values)
         center = l // 2
         width = 4
-        values[center-width:center+width] = values[center-width:center+width] / (signal_buffer.length * 10)
+        values[center-width:center+width] = (
+            values[center-width:center+width]
+            / (signal_buffer.length * 10)
+        )
         # END HACK
 
         title = observation.identifier
@@ -78,7 +87,6 @@ def plot_to_image(log, values, freq, observation, buff_percent):
 
 
 def write_spectrum(
-    log,
     observation,
     values,
     c_values,
@@ -100,11 +108,11 @@ def write_spectrum(
 
 
 def check_observations(
-    log,
     event_queue,
     input_directory=settings.CAPTURE_DATA_PATH,
     output_directory=settings.SPECTRUM_DATA_PATH,
     batch_size=settings.SPECTRUM_BATCH_SIZE,
+    smoothed=settings.SMOOTHING_ENABLED,
     smoothing_window=settings.SMOOTHING_WINDOW_LENGTH,
 ):
     config_files = [
@@ -118,73 +126,68 @@ def check_observations(
 
     for path, filename in config_files[:batch_size]:
         with managed_status(event_queue, StatusLight.analysis):
-            log.put(('info', f'Processing {filename}...'))
+            logger.info(f'Processing {filename}...')
             try:
                 observation, get_signal, get_c_signal = iqd.read(path)
             except Exception as e:
-                log.put(('error', f'Unable to fetch data for {filename}. {e=}. Purging.'))
+                logger.error(f'Unable to fetch data for {filename}. {e=}. Purging.')
                 continue
 
-            log.put(('info', f'Processing {observation.summary}'))
+            logger.info(f'Processing {observation.summary}')
 
             signal = get_signal()
 
             if calibration := observation.calibration:
                 c_signal = get_c_signal()
+                c_identifier = observation.calibration.identifier
             else:
                 c_signal = None
+                c_identifier = default_identifier
 
             if c_signal is not None and len(c_signal) != len(signal):
-                log.put(('warning', f'Signal length differed from calibration length. Skipping...'))
+                logger.warning(f'Signal length differed from calibration length. Skipping...')
                 iqd.remove(path)
                 continue
 
-            # TODO: The buffer should be cleared once a new calibration is done.
-            # The buffer needs a calibration identifier so that once a new
-            # calibration is done, the buffer is empty. Or the buffer is multi-
-            # keyed for each calibration. Then consider how to clear them
-            # once the calibration is not useful anymore.
-            # Perhaps removed from the cal-directory?
-
             values, freq = process_spectrum(observation, signal, c_signal)
-            signal_buffer.add(values)
+            signal_buffers[c_identifier].add(values)
             pxx = np.sum(signal_buffer.get_data(), axis=0)
-            # smoothed = rolling_mean(pxx, smoothing_window)
+            if smoothed:
+                pxx = rolling_mean(pxx, smoothing_window)
 
             write_spectrum(
-                log,
                 observation,
                 pxx,
                 None,
                 freq,
-                plot_to_image(log, pxx, freq, observation, signal_buffer.percent_full),
+                plot_to_image(pxx, freq, observation, signal_buffer.percent_full),
                 output_directory,
             )
             config_output_path = os.path.join(output_directory, os.path.basename(path))
             shutil.copyfile(path, config_output_path)
-            log.put(('info', f'Finished processing {filename}. Purging.'))
+            logger.info(f'Finished processing {filename}. Purging.')
             iqd.remove(path)
 
 
-def loop(log, event_queue):
-    check_observations(log, event_queue)
+def loop(event_queue):
+    check_observations(event_queue)
 
 
-def analyze_spectra(log, event_queue):
+def analyze_spectra(event_queue):
     """ Continuously watch the sky and record values to disk. """
-    if setup(log):
-        log.put(('info', 'Analyzing spectra...'))
-        log.put(('info', f'[Spectra] pid: {os.getpid()} [P: {os.getppid()}]'))
+    if setup():
+        logger.info('Analyzing spectra...')
+        logger.info(f'[Spectra] pid: {os.getpid()} [P: {os.getppid()}]')
         try:
             while True:
-                log.put(('debug', 'Begin spectra iteration...'))
-                loop(log, event_queue)
-                log.put(('debug', 'End spectra iteration. Sleeping...'))
+                logger.debug('Begin spectra iteration...')
+                loop(event_queue)
+                logger.debug('End spectra iteration. Sleeping...')
                 time.sleep(settings.Wait.processing)
         except Exception as e:
-            log.put(('error', f'Encountered error during analysis. {e}. Exiting...'))
+            logger.error(f'Encountered error during analysis. {e}. Exiting...')
             event_queue.put(('light', StatusLight.analysis, 'flash_error'))
     else:
-        log.put(('error', 'Setup failed. Exiting.'))
+        logger.error('Setup failed. Exiting.')
 
-    log.put(('info', 'Done.'))
+    logger.info('Done.')

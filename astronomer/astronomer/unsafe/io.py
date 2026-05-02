@@ -1,12 +1,12 @@
 from dataclasses import dataclass
-import logging
+from multiprocessing import get_logger
 import socket
 import time
 
 from .. import settings
 
 
-logger = logging.getLogger('astronomer')
+logger = get_logger()
 
 
 try:
@@ -52,7 +52,7 @@ def dummy_socket_send(message: [bytes]):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect((settings.TEST_SOCKET_HOST, settings.TEST_SOCKET_SEND_PORT))
             s.sendall(message)
-            logger.info(f'Message sent: {message}.')
+            logger.debug(f'Message sent: {message.decode()}.')
     except IOError as e:
         logger.error(f'Unable to send message to remote socket: {e}')
 
@@ -104,7 +104,7 @@ class Light:
             GPIO.setup(self.pin, GPIO.OUT)
             logger.debug(f'[GPIO Available] Pin {self.pin} setup.')
         else:
-            logger.warning(f'[GPIO Unavailable] Pin {self.pin} setup.')
+            logger.debug(f'[GPIO Unavailable] Pin {self.pin} setup.')
         self.off()
 
     def _flash(self, n=1, delay=FAST_DELAY, end_state=False):
@@ -136,7 +136,7 @@ class Light:
             logger.debug(f'[GPIO Available] Pin {self.pin} on.')
         else:
             dummy_socket_send(f'{self.pin}-1'.encode('ascii'))
-            logger.warning(f'[GPIO Unavailable] Pin {self.pin} on.')
+            logger.debug(f'[GPIO Unavailable] Pin {self.pin} on.')
 
     def off(self):
         if GPIO:
@@ -144,4 +144,4 @@ class Light:
             logger.debug(f'[GPIO Available] Pin {self.pin} off.')
         else:
             dummy_socket_send(f'{self.pin}-0'.encode('ascii'))
-            logger.warning(f'[GPIO Unavailable] Pin {self.pin} off.')
+            logger.debug(f'[GPIO Unavailable] Pin {self.pin} off.')
