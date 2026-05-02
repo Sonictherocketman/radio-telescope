@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 
 
 @dataclass
@@ -12,17 +12,11 @@ class AbstractObservation:
     gain: int
     bandwidth: int
     timestamp: str = None
+    n: int = None
 
     @property
     def meta(self) -> dict:
-        return dict(
-            identifier=self.identifier,
-            frequency=self.frequency,
-            sample_rate=self.sample_rate,
-            gain=self.gain,
-            bandwidth=self.bandwidth,
-            timestamp=self.timestamp,
-        )
+        return asdict(self)
 
 
 @dataclass
@@ -32,19 +26,28 @@ class Calibration(AbstractObservation):
 
 @dataclass
 class Observation(AbstractObservation):
-    calibration: Observation = None
+    calibration: Calibration = None
 
     @property
     def summary(self) -> str:
         return (
             f'{self.identifier} (gain={self.gain}, freq={self.frequency}) '
-            f'sr={self.sample_rate}, bw={self.bandwidth}, '
+            f'sr={self.sample_rate}, bw={self.bandwidth}, n={self.n}, '
             f'c={bool(self.calibration)})'
         )
 
     @property
     def meta(self) -> dict:
-        if self.calibration:
-            return dict(**super().meta, calibration=self.calibration.meta)
-        else:
-            return super().meta
+        meta = super().meta
+        if self.calibration is None:
+            del meta['calibration']
+        return meta
+
+@dataclass
+class BufferStatus:
+    percent_full: float
+
+
+@dataclass
+class SpectrumObservation(Observation):
+    buffer_status: BufferStatus = None

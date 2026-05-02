@@ -6,8 +6,6 @@ import shutil
 import time
 
 
-from rtlsdr import RtlSdr, rtlsdr
-
 from .. import settings
 from ..models.lights import StatusLight
 from ..models.observation import Observation, Calibration
@@ -87,6 +85,7 @@ def take_calibration_reading(*args, c_ext=CALIBRATION_FILE_EXTENSION, **kwargs):
         directory=settings.CALIBRATION_DATA_PATH,
         signal_ext=c_ext,
         use_calibration=False,
+        is_calibration=True,
         **kwargs,
     )
     global calibration
@@ -105,6 +104,7 @@ def take_reading(
     bandwidth=1,
     ts=None,
     use_calibration=True,
+    is_calibration=False,
     signal_ext=SIGNAL_FILE_EXTENSION,
     config_ext=CONFIG_FILE_EXTENSION,
     c_ext=CALIBRATION_FILE_EXTENSION,
@@ -132,13 +132,15 @@ def take_reading(
 
     # Write the config
 
-    observation = Observation(
+    type = Calibration if is_calibration else Observation
+    observation = type(
         identifier=identifier,
         frequency=frequency,
         sample_rate=sample_rate,
         gain=gain,
         bandwidth=bandwidth,
         timestamp=datetime.utcnow().isoformat(),
+        n=n,
     )
 
     if use_calibration and calibration is not None:

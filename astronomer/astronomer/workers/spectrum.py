@@ -14,6 +14,7 @@ from .. import settings
 from ..utils import iqd
 from ..models.lights import StatusLight
 from ..models.buffer import FixedBuffer
+from ..models.observation import BufferStatus, SpectrumObservation
 from ..mpsafe import managed_status
 
 
@@ -34,20 +35,25 @@ def setup():
 def process_spectrum(observation, signal, c_signal, NFFT=1024, pad=1e6):
     Fc = observation.frequency / pad
 
+    pxx, freqs = mlab.psd(
+        signal,
+        NFFT=NFFT,
+        Fs=observation.sample_rate / pad,
+    )
+    freqs += Fc
+    pxx /= np.max(pxx)
+
     if c_signal is not None:
-        pxx, freqs = mlab.csd(
-            signal,
+        c_pxx, c_freqs = mlab.psd(
             c_signal,
             NFFT=NFFT,
             Fs=observation.sample_rate / pad,
         )
-        freqs += Fc
-    else:
-        pxx, freqs = mlab.psd(
-            signal,
-            NFFT=NFFT,
-            Fs=observation.sample_rate / pad,
-        )
+        c_freqs += Fc
+        c_pxx /= np.max(c_pxx)
+
+        pxx -= c_pxx
+        pxx = np.maximum(pxx, np.maximum(np.median(pxx), 0))
 
     return pxx, freqs
 
@@ -57,17 +63,24 @@ def rolling_mean(x, window_length):
     return np.convolve(x, np.ones(window_length) / window_length, mode='same')
 
 
-def plot_to_image(values, freq, observation, buff_percent):
+def plot_to_image(values, freq, observation, buff_percent, y_scale_factor=2):
     with tempfile.NamedTemporaryFile('wb+', suffix='.png') as f:
         logger.debug(f'Using NTF: {f.name}')
 
         # TODO: Temp hack to remove DC offset spike
+        if observation.calibration:
+            identifier = observation.calibration.identifier
+        else:
+            identifier = default_identifier
+
+        signal_buffer = signal_buffers[identifier]
+        last_values = signal_buffer.get_data()[-1]
         l = len(values)
         center = l // 2
         width = 4
         values[center-width:center+width] = (
             values[center-width:center+width]
-            / (signal_buffer.length * 10)
+            / (last_values[center-width:center+width] * signal_buffer.length)
         )
         # END HACK
 
@@ -77,7 +90,9 @@ def plot_to_image(values, freq, observation, buff_percent):
         title += f' (Buffer {int(buff_percent*100)}%)'
 
         plt.title(title)
-        plt.plot(freq, values)
+        plt.plot(freq[5:-5], values[5:-5])
+        bottom, top = plt.ylim()
+        plt.ylim(bottom*y_scale_factor, top*y_scale_factor)
         plt.xlabel('Frequency (MHz)')
         plt.ylabel('Relative power (dB)')
         plt.savefig(f.name)
@@ -131,6 +146,7 @@ def check_observations(
                 observation, get_signal, get_c_signal = iqd.read(path)
             except Exception as e:
                 logger.error(f'Unable to fetch data for {filename}. {e=}. Purging.')
+                iqd.remove(path)
                 continue
 
             logger.info(f'Processing {observation.summary}')
@@ -150,7 +166,10 @@ def check_observations(
                 continue
 
             values, freq = process_spectrum(observation, signal, c_signal)
-            signal_buffers[c_identifier].add(values)
+
+            signal_buffer = signal_buffers[c_identifier]
+            signal_buffer.add(values)
+
             pxx = np.sum(signal_buffer.get_data(), axis=0)
             if smoothed:
                 pxx = rolling_mean(pxx, smoothing_window)
@@ -163,8 +182,15 @@ def check_observations(
                 plot_to_image(pxx, freq, observation, signal_buffer.percent_full),
                 output_directory,
             )
+
+            # Add spectrum analysis info to the observation meta and persist
             config_output_path = os.path.join(output_directory, os.path.basename(path))
-            shutil.copyfile(path, config_output_path)
+            buffered_observation = SpectrumObservation(
+                **observation.meta,
+                buffer_status=BufferStatus(signal_buffer.percent_full)
+            )
+            iqd.write_config(config_output_path, buffered_observation)
+
             logger.info(f'Finished processing {filename}. Purging.')
             iqd.remove(path)
 

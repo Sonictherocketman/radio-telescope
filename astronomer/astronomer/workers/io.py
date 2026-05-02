@@ -54,7 +54,7 @@ def handle_io(event_queue, should_calibrate, should_observe):
     # Observe
 
     def toggle_should_observe(*args):
-        logger.debug('[I/O] Toggle observe command detected.')
+        logger.info('[I/O] Toggle observe command detected.')
         if should_observe.is_set():
             should_observe.clear()
         else:

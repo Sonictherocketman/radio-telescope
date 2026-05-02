@@ -1,1 +1,4 @@
 httpx==0.27.0
+pyrtlsdr==0.3.0
+pyrtlsdrlib==0.0.1
+matplotlib==3.8.3

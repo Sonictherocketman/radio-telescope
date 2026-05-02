@@ -9,22 +9,24 @@ import numpy as np
 from ..models.observation import Observation
 
 
+def read_config(path) -> Observation:
+    with open(path, 'r') as f:
+        config = json.load(f)
+
+    if 'calibration' in config:
+        config['calibration'] = Observation(**config['calibration'])
+        return Observation(**config)
+    else:
+        return Observation(**config)
+
+
 def write_config(path, observation: Observation):
     with open(path, 'w') as f:
         json.dump(observation.meta, f, indent=2)
 
 
 def read(config_path, sig_ext='.iq', cal_ext='.ciq'):
-    with open(config_path, 'r') as f:
-        config = json.load(f)
-
-    if 'calibration' in config:
-        calibration = Observation(**config['calibration'])
-        del config['calibration']
-    else:
-        calibration = None
-
-    observation = Observation(**config, calibration=calibration)
+    observation = read_config(config_path)
 
     directory = os.path.dirname(config_path)
     name, _ = os.path.splitext(os.path.basename(config_path))

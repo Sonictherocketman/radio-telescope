@@ -6,6 +6,11 @@ from subprocess import run, Popen, CalledProcessError, TimeoutExpired
 import time
 
 import numpy as np
+try:
+    from rtlsdr import RtlSdr as _RtlSdr
+except ImportError:
+    print('[Warning] Unable to import RtlSdr. RTLSDR_v2 device not available')
+    _RtlSdr = None
 
 from .. import settings
 
@@ -40,7 +45,7 @@ class TestSDR:
             f.write(data.tobytes())
 
 
-class RTLSDR:
+class RTLSDR_v1:
 
     sample_rate = 1e6
     center_freq = 1e6
@@ -118,6 +123,51 @@ class RTLSDR:
             raise e
 
 
+class RTLSDR_v2:
+
+    sample_rate = 2.4e6
+    center_freq = 95e6
+    bandwidth = None
+    gain = 4
+    ppm = 0  # unused
+
+    def _get_sdr(self):
+        sdr = _RtlSdr()
+        sdr.sample_rate = self.sample_rate
+        sdr.center_freq = self.center_freq
+#         sdr.bandwidth = self.bandwidth
+        sdr.gain = self.gain
+        return sdr
+
+    def test_device(self, n=256*1024):
+        try:
+            sdr = self._get_sdr()
+            samples = sdr.read_samples(n)
+        except Exception as e:
+            print(f'[Warning] Cannot read from device (RTLSDR_v2) {e}')
+            raise e
+        finally:
+            sdr.close()
+
+    def set_bias_tee(self, value, device_index=0):
+        pass
+
+    def read_samples(self, destination_path, n):
+        """ Take a reading from the device given the settings provided
+        and save those to the a file as a compressed archive.
+        """
+        try:
+            sdr = self._get_sdr()
+            with open(destination_path, 'wb') as f:
+                samples = sdr.read_samples(n)
+                samples.tofile(destination_path)
+        except Exception as e:
+            print(f'[Warning] Cannot read from device (RTLSDR_v2) {e}')
+            raise e
+        finally:
+            sdr.close()
+
+
 class DefaultDevice:
 
     def __init__(
@@ -131,7 +181,7 @@ class DefaultDevice:
             self.sdr = TestSDR()
             self.bias_tee = bias_tee
         else:
-            self.sdr = RTLSDR()
+            self.sdr = RTLSDR_v2()
             self.bias_tee = bias_tee
 
     def set_settings(
@@ -151,10 +201,10 @@ class DefaultDevice:
         if gain:
             self.sdr.gain = gain
 
-    def test(self, n=1, **kwargs):
+    def test(self, **kwargs):
         try:
             self.set_settings(**kwargs)
-            self.sdr.test_device(n)
+            self.sdr.test_device()
         except Exception:
             return False
         else:
