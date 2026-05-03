@@ -73,8 +73,8 @@ def plot_to_image(values, freq, observation, buff_percent, y_scale_factor=2):
         else:
             identifier = default_identifier
 
-        if len(signal_buffers.get_data()) > 1:
-            signal_buffer = signal_buffers[identifier]
+        signal_buffer = signal_buffers[identifier]
+        if len(signal_buffer.get_data()) > 1:
             prevous_values = signal_buffer.get_data()[1]
             l = len(values)
             center = l // 2
