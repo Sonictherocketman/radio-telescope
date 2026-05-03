@@ -27,13 +27,28 @@ SIGNAL_FILE_EXTENSION = '.iq'
 CONFIG_FILE_EXTENSION = '.json'
 
 
-def setup(event_queue, test_mode=False, bias_tee=False):
+def setup(
+    event_queue,
+    sample_rate,
+    frequency,
+    gain,
+    bandwidth,
+    test_mode=False,
+    bias_tee=False,
+):
     # Connect to SDR
     if test_mode:
         logger.info('Test SDR mode: enabled')
     global device
     try:
-        device = DefaultDevice(test_mode=test_mode, bias_tee=bias_tee)
+        device = DefaultDevice(
+            sample_rate=sample_rate,
+            frequency=frequency,
+            gain=gain,
+            bandwidth=bandwidth,
+            test_mode=test_mode,
+            bias_tee=bias_tee,
+        )
     except Exception as e:
         logger.error(f'Unable to use SDR: {e}')
         return False
@@ -58,24 +73,13 @@ def setup(event_queue, test_mode=False, bias_tee=False):
 
 
 def warm_up(
-    sample_rate,
-    frequency,
-    gain,
-    bandwidth,
     n=settings.WARM_UP_SAMPLES,
     destination='/dev/null',
 ):
-    estimated_time = n // sample_rate
-    logger.info(f'Performing device warmup {n=}, {estimated_time=}s...')
     global device
-    device.read(
-        destination,
-        sample_rate=sample_rate,
-        frequency=frequency,
-        gain=gain,
-        bandwidth=bandwidth,
-        n=n,
-    )
+    estimated_time = n // device.sample_rate
+    logger.info(f'Performing device warmup {n=}, {estimated_time=}s...')
+    device.read(destination, n=n)
 
 
 def take_calibration_reading(*args, c_ext=CALIBRATION_FILE_EXTENSION, **kwargs):
@@ -121,14 +125,7 @@ def take_reading(
 
     # Capture the signal
 
-    device.read(
-        signal_path,
-        sample_rate=sample_rate,
-        frequency=frequency,
-        gain=gain,
-        bandwidth=bandwidth,
-        n=n,
-    )
+    device.read(signal_path, n=n)
 
     # Write the config
 
@@ -187,16 +184,18 @@ def loop(event_queue, should_calibrate, should_observe):
 
 def watch_sky(event_queue, should_calibrate, should_observe):
     """ Continuously watch the sky and record values to disk. """
-    if setup(event_queue, settings.CAPTURE_TEST_MODE_ENABLED):
+    if setup(
+        event_queue,
+        settings.CAPTURE_SAMPLE_RATE,
+        settings.CAPTURE_FREQUENCY,
+        settings.CAPTURE_GAIN,
+        settings.CAPTURE_BANDWIDTH,
+        settings.CAPTURE_TEST_MODE_ENABLED,
+    ):
         try:
             logger.info(f'[WatchSky] pid: {os.getpid()} [P: {os.getppid()}]')
             with managed_status(event_queue, StatusLight.capture):
-                warm_up(
-                    settings.CAPTURE_SAMPLE_RATE,
-                    settings.CAPTURE_FREQUENCY,
-                    settings.CAPTURE_GAIN,
-                    settings.CAPTURE_BANDWIDTH,
-                )
+                warm_up()
             logger.info('Ready...')
             while True:
                 logger.debug('Begin data capture iteration...')

@@ -131,6 +131,9 @@ class RTLSDR_v2:
     gain = 4
     ppm = 0  # unused
 
+    def __init__(self):
+        pass
+
     def _get_sdr(self):
         sdr = _RtlSdr()
         sdr.sample_rate = self.sample_rate
@@ -172,7 +175,10 @@ class DefaultDevice:
 
     def __init__(
         self,
-        *args,
+        sample_rate,
+        frequency,
+        gain,
+        bandwidth,
         test_mode=False,
         bias_tee=False,
         **kwargs,
@@ -184,26 +190,26 @@ class DefaultDevice:
             self.sdr = RTLSDR_v2()
             self.bias_tee = bias_tee
 
-    def set_settings(
-        self,
-        sample_rate=None,
-        frequency=None,
-        bandwidth=None,
-        gain=None,
-    ):
+        self.sample_rate = sample_rate
+        self.frequency = frequency
+        self.gain = gain
+        self.bandwidth = bandwidth
+
+        self.set_settings()
+
+    def set_settings(self):
         self.sdr.set_bias_tee(self.bias_tee)
-        if sample_rate:
-            self.sdr.sample_rate = sample_rate
-        if frequency:
-            self.sdr.center_freq = frequency
-        if bandwidth:
-            self.sdr.bandwidth = bandwidth
-        if gain:
-            self.sdr.gain = gain
+        if self.sample_rate:
+            self.sdr.sample_rate = self.sample_rate
+        if self.frequency:
+            self.sdr.center_freq = self.frequency
+        if self.bandwidth:
+            self.sdr.bandwidth = self.bandwidth
+        if self.gain:
+            self.sdr.gain = self.gain
 
     def test(self, **kwargs):
         try:
-            self.set_settings(**kwargs)
             self.sdr.test_device()
         except Exception:
             return False
@@ -211,5 +217,4 @@ class DefaultDevice:
             return True
 
     def read(self, destination_path, n, **kwargs):
-        self.set_settings(**kwargs)
         return self.sdr.read_samples(destination_path, n)
