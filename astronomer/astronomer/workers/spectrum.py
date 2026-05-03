@@ -74,13 +74,13 @@ def plot_to_image(values, freq, observation, buff_percent, y_scale_factor=2):
             identifier = default_identifier
 
         signal_buffer = signal_buffers[identifier]
-        last_values = signal_buffer.get_data()[-1]
+        prevous_values = signal_buffer.get_data()[1]
         l = len(values)
         center = l // 2
-        width = 4
+        width = 10
         values[center-width:center+width] = (
             values[center-width:center+width]
-            / (last_values[center-width:center+width] * signal_buffer.length)
+            / (prevous_values[center-width:center+width] * signal_buffer.length)
         )
         # END HACK
 

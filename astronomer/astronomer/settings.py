@@ -55,7 +55,7 @@ CAPTURE_GAIN = 49.6
 
 CAPTURE_SAMPLE_RATE = 3.2e6
 
-CAPTURE_SAMPLE_SIZE = 2**24
+CAPTURE_SAMPLE_SIZE = 2**22
 
 WARM_UP_SAMPLES = 2**18
 
@@ -131,8 +131,8 @@ DOWNLINK_STATUS_PIN = int(os.environ.get(
 
 
 class Wait:
-    device = 0.3
-    processing = 1
+    device = 1
+    processing = 0.5
     background = 10
 
 

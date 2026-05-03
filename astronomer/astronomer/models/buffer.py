@@ -16,4 +16,3 @@ class FixedBuffer:
     @property
     def percent_full(self):
         return len(self._data) / self.length
-
