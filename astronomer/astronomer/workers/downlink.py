@@ -1,5 +1,7 @@
+from datetime import datetime
 from multiprocessing import get_logger
 import os
+import json
 import time
 
 import httpx
@@ -13,47 +15,55 @@ from ..utils import api
 logger = get_logger()
 
 
-# def configure(*args):
-#     configuration = api.get_configuration()
-#     with connection as cursor:
-#         db.truncate_tables(cursor)
-#         db.insert_telescope(configuration, cursor)
-#         for task in configuration['tasks']:
-#             db.insert_task(task, cursor)
-#
-#
-# def add_task(data):
-#     with connection as cursor:
-#         db.insert_task(data['task'], cursor)
-#
-#
-# def update_task(data):
-#     with connection as cursor:
-#         db.update_task(data['task'], cursor)
-#
-#
-# def delete_task(data):
-#     with connection.cursor() as cursor:
-#         db.delete_task(data['task'], cursor)
+def setup():
+    os.makedirs(settings.DOWNLINK_CONFIGURATION_PATH, exist_ok=True)
+    return True
 
 
-def check_config():
-    # TODO: Add config check here. For now we just ping.
+def get_and_write_config():
+    logger.debug('[ ] Fetching remote config')
+    configuration = api.get_configuration()
+    logger.debug('[✔] Fetching remote config')
+    logger.debug('[ ] Writing Remote config to disk')
+    with open(settings.DOWNLINK_CONFIGURATION_FILE, 'w') as f:
+        json.dump(configuration, f)
+    logger.info('[✔] Remote config written to disk')
+
+
+def health_check():
+    logger.debug('[ ] Health check')
     api.health_check()
+    logger.info('[✔] Health check')
 
 
-def downlink(event_queue):
-#     global connection
-#     connection = db.setup_and_connect()
+def is_expired(updated_at, threshold):
+    if updated_at is None:
+        return True
+    now = datetime.utcnow()
+    logger.debug(
+        f'Checking expiry: {now}, {updated_at}, {now - updated_at} - '
+        f't: {threshold.seconds}'
+    )
+    return now - updated_at > threshold
 
+
+def downlink(event_queue, config_expiry=settings.DOWNLINK_CONFIG_EXPIRY):
     logger.info('Beginning downlink from host...')
     logger.info(f'downlink pid: {os.getpid()} [P: {os.getppid()}]')
 
+    if not setup():
+        logger.warning('Unable to setup downlink.')
+        return
+
+    config_updated_at = None
+
     while True:
         with managed_status(event_queue, StatusLight.downlink) as light:
-            logger.info('Checking remote configuration...')
             try:
-                check_config()
+                health_check()
+                if is_expired(config_updated_at, config_expiry):
+                    get_and_write_config()
+                    config_updated_at = datetime.utcnow()
             except Exception as e:
                 light('flash_error')
                 logger.error(f'Downlink error: {e}.')

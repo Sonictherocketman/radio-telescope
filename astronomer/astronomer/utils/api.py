@@ -18,6 +18,18 @@ def health_check(timeout=settings.DEFAULT_REQUEST_TIMEOUT):
     return True
 
 
+def get_configuration(timeout=settings.DEFAULT_REQUEST_TIMEOUT):
+    response = httpx.get(
+        settings.DOWNLINK_CONFIGURATION_URL,
+        headers={
+            'User-Agent': settings.USER_AGENT,
+        },
+        timeout=timeout,
+    )
+    response.raise_for_status()
+    return response.json()
+
+
 def upload_observation(
     path,
     timeout=settings.DEFAULT_REQUEST_TIMEOUT,

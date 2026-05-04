@@ -27,6 +27,7 @@ class Calibration(AbstractObservation):
 @dataclass
 class Observation(AbstractObservation):
     calibration: Calibration = None
+    attributes: object = None
 
     @property
     def summary(self) -> str:

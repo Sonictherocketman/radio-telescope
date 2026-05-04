@@ -1,3 +1,4 @@
+from datetime import timedelta
 import os
 import os.path
 from pathlib import Path
@@ -113,17 +114,21 @@ TRANSMIT_REMOTE_DIRECTORY = os.environ.get(
 
 # Downlink Settings
 
+DOWNLINK_CONFIG_EXPIRY = timedelta(
+    seconds=int(os.environ.get('DOWNLINK_CONFIG_EXPIRY_SECONDS', '30'))
+)
 DOWNLINK_CONFIGURATION_URL = os.environ.get(
     'DOWNLINK_CONFIGURATION_URL',
-    urllib.parse.urljoin(HOME_URL, '/'),
+    urllib.parse.urljoin(HOME_URL, '/config/configuration.json'),
 )
-DOWNLINK_EVENT_STREAM_URL = os.environ.get(
-    'DOWNLINK_EVENT_STREAM_URL',
-    urllib.parse.urljoin(HOME_URL, '/'),
+DOWNLINK_CONFIGURATION_PATH = os.environ.get(
+    'DOWNLINK_CONFIGURATION_PATH',
+    os.path.join(BASE_DIR, './data/config'),
 )
-DOWNLINK_EVENT_STREAM_TIMEOUT = 30
-DOWNLINK_RECONNECT_SECONDS = 10
-
+DOWNLINK_CONFIGURATION_FILE = os.environ.get(
+    'DOWNLINK_CONFIGURATION_FILE',
+    os.path.join(DOWNLINK_CONFIGURATION_PATH, 'configuration.json'),
+)
 DOWNLINK_STATUS_PIN = int(os.environ.get(
     'DOWNLINK_STATUS_PIN',
     11,

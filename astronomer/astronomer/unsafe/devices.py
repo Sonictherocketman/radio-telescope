@@ -25,7 +25,7 @@ class TestSDR:
     def set_bias_tee(self, value, device_index=0):
         pass
 
-    def test_device(self, n, delay=2):
+    def test_device(self, delay=2):
         time.sleep(delay)
         return True
 
@@ -131,9 +131,6 @@ class RTLSDR_v2:
     gain = 4
     ppm = 0  # unused
 
-    def __init__(self):
-        pass
-
     def _get_sdr(self):
         sdr = _RtlSdr()
         sdr.sample_rate = self.sample_rate
@@ -211,7 +208,8 @@ class DefaultDevice:
     def test(self, **kwargs):
         try:
             self.sdr.test_device()
-        except Exception:
+        except Exception as e:
+            print(f'[WARNING] device failed test: {e}')
             return False
         else:
             return True

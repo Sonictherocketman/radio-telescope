@@ -68,6 +68,7 @@ def loop(
 
         logger.info(f'Transmitting sample ({identifier}) to remote host...')
         try:
+            # TODO: Doing these in series is too slow. Glob? Or Threading?
             for path in associated_files:
                 with managed_status(event_queue, StatusLight.transmit):
                     api.upload_observation(path)
