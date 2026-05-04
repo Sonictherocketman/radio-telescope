@@ -53,7 +53,7 @@ def process_spectrum(observation, signal, c_signal, NFFT=1024, pad=1e6):
         c_pxx /= np.max(c_pxx)
 
         pxx -= c_pxx
-        pxx = np.maximum(pxx, np.maximum(np.median(pxx), 0))
+        pxx = np.maximum(pxx, 0)
 
     return pxx, freqs
 
@@ -93,7 +93,7 @@ def plot_to_image(values, freq, observation, buff_percent, y_scale_factor=2):
         plt.title(title)
         plt.plot(freq[5:-5], values[5:-5])
         bottom, top = plt.ylim()
-        plt.ylim(bottom*y_scale_factor, top*y_scale_factor)
+        plt.ylim(0, top*y_scale_factor)
         plt.xlabel('Frequency (MHz)')
         plt.ylabel('Relative power (dB)')
         plt.savefig(f.name)
