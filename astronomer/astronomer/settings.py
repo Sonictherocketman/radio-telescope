@@ -107,7 +107,7 @@ TRANSMIT_REMOTE_USER = os.environ.get(
     'TRANSMIT_REMOTE_USER',
     'astronomer'
 )
-TRANSMIT_TEST_MODE_ENABLED = True
+TRANSMIT_TEST_MODE_ENABLED = False
 TRANSMIT_REMOTE_DIRECTORY = os.environ.get(
     'TRANSMIT_REMOTE_DIRECTORY',
     './data/test-deploy'
