@@ -54,11 +54,11 @@ CAPTURE_FREQUENCY = 1.4202e9 + 0.0005e9
 
 CAPTURE_GAIN = 49.6
 
-CAPTURE_SAMPLE_RATE = 3.2e6
+CAPTURE_SAMPLE_RATE = 2.4e6
 
 CAPTURE_SAMPLE_SIZE = 2**22
 
-WARM_UP_SAMPLES = 2**18
+WARM_UP_SAMPLES = 2**16
 
 # Spectrum Settings
 
@@ -140,9 +140,9 @@ DOWNLINK_STATUS_PIN = int(os.environ.get(
 
 
 class Wait:
-    device = 1
+    device = 3
     processing = 0.5
-    background = 10
+    background = 5
 
 
 # Test Rig
