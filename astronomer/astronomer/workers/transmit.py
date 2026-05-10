@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor
 import gzip
 import logging
 import os
@@ -46,8 +47,13 @@ def loop(
     batch = files[:batch_size]
     logger.info(f'Found {len(files)} total to transmit. Uploading {len(batch)}.')
     for path in batch:
-        with open(path) as f:
-            config = json.load(f)
+        try:
+            with open(path) as f:
+                config = json.load(f)
+        except Exception as e:
+            logger.error(f'Found malformed data config. Error {e}. Purging...')
+            os.remove(path)
+            continue
 
         identifier = config.get('identifier', None)
         if not identifier:
@@ -69,10 +75,18 @@ def loop(
         logger.info(f'Transmitting sample ({identifier}) to remote host...')
         try:
             # TODO: Doing these in series is too slow. Glob? Or Threading?
-            for path in associated_files:
-                with managed_status(event_queue, StatusLight.transmit):
-                    api.upload_observation(path)
+            with managed_status(event_queue, StatusLight.transmit):
+                with ThreadPoolExecutor() as executor:
+                    # TODO: get true/false + reason and log.
+                    results = executor.map(
+                        api.upload_observation,
+                        associated_files,
+                    )
+                    for result in results:
+                        pass
+
         except CalledProcessError as e:
+            # TODO: this needs to move.
             logger.warning(
                 f'Transmission failure: {path}. '
                 f'Status Code: {e.returncode} '

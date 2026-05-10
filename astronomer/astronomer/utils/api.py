@@ -37,6 +37,7 @@ def upload_observation(
     user=settings.TRANSMIT_REMOTE_USER,
     target=settings.TRANSMIT_REMOTE_DIRECTORY,
 ):
+    # TODO: Catch exception and return true false or w/e
     run(
         f"scp -C '{path}' '{user}@{host}:{target}'",
         check=True,

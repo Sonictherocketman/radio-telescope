@@ -93,7 +93,7 @@ def plot_to_image(values, freq, observation, buff_percent, y_scale_factor=2):
         plt.title(title)
         plt.plot(freq[5:-5], values[5:-5])
         bottom, top = plt.ylim()
-        plt.ylim(0, top*y_scale_factor)
+        plt.ylim(0, y_scale_factor*max(top, settings.MIN_CHART_Y_SCALE))
         plt.xlabel('Frequency (MHz)')
         plt.ylabel('Relative power (dB)')
         plt.savefig(f.name)
