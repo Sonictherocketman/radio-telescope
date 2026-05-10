@@ -194,7 +194,7 @@ def check_observations(
             # Write to tempfile then mv so the action is atomic.
             # Actions are taken on this file so it needs to be 100% valid
             # as soon as it exists.
-            _, tmp_file = tempfile.mkstemp(dir=output_directory, suffix='.json.tmp')
+            tmp_file = f'{config_output_path}.tmp'
             iqd.write_config(tmp_file, buffered_observation)
             shutil.move(tmp_file, config_output_path)
             logger.info(f'Finished processing {filename}. Purging.')
