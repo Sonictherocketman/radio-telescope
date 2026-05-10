@@ -8,6 +8,7 @@ from dataclasses import dataclass, asdict
 class AbstractObservation:
     identifier: str
     frequency: int
+    offset: int
     sample_rate: int
     gain: int
     bandwidth: int
@@ -17,6 +18,10 @@ class AbstractObservation:
     @property
     def meta(self) -> dict:
         return asdict(self)
+
+    @property
+    def effective_frequency(self) -> int:
+        return self.frequency + self.offset
 
 
 @dataclass

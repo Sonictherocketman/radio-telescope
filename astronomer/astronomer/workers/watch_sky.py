@@ -32,6 +32,7 @@ def setup(
     event_queue,
     sample_rate,
     frequency,
+    offset,
     gain,
     bandwidth,
     test_mode=False,
@@ -44,7 +45,7 @@ def setup(
     try:
         device = DefaultDevice(
             sample_rate=sample_rate,
-            frequency=frequency,
+            frequency=frequency + offset,
             gain=gain,
             bandwidth=bandwidth,
             test_mode=test_mode,
@@ -103,6 +104,7 @@ def take_calibration_reading(*args, c_ext=CALIBRATION_FILE_EXTENSION, **kwargs):
 def take_reading(
     identifier,
     frequency,
+    offset,
     sample_rate,
     gain=0,
     n=1,
@@ -140,6 +142,7 @@ def take_reading(
     observation = type(
         identifier=identifier,
         frequency=frequency,
+        offset=offset,
         sample_rate=sample_rate,
         gain=gain,
         bandwidth=bandwidth,
@@ -170,6 +173,7 @@ def loop(event_queue, should_calibrate, should_observe):
     kwargs = dict(
         identifier=f'sample-{short_now}',
         frequency=settings.CAPTURE_FREQUENCY,
+        offset=settings.CAPTURE_OFFSET,
         sample_rate=settings.CAPTURE_SAMPLE_RATE,
         gain=settings.CAPTURE_GAIN,
         n=settings.CAPTURE_SAMPLE_SIZE,
@@ -196,6 +200,7 @@ def watch_sky(event_queue, should_calibrate, should_observe):
         event_queue,
         settings.CAPTURE_SAMPLE_RATE,
         settings.CAPTURE_FREQUENCY,
+        settings.CAPTURE_OFFSET,
         settings.CAPTURE_GAIN,
         settings.CAPTURE_BANDWIDTH,
         settings.CAPTURE_TEST_MODE_ENABLED,

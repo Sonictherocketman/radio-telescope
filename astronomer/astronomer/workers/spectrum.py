@@ -33,7 +33,7 @@ def setup():
 
 
 def process_spectrum(observation, signal, c_signal, NFFT=1024, pad=1e6):
-    Fc = observation.frequency / pad
+    Fc = observation.effective_frequency / pad
 
     pxx, freqs = mlab.psd(
         signal,
@@ -63,27 +63,16 @@ def rolling_mean(x, window_length):
     return np.convolve(x, np.ones(window_length) / window_length, mode='same')
 
 
-def plot_to_image(values, freq, observation, buff_percent, y_scale_factor=2):
+def plot_to_image(
+    values,
+    freq,
+    observation,
+    buff_percent,
+    y_scale_factor=2,
+    pad=1e6,
+):
     with tempfile.NamedTemporaryFile('wb+', suffix='.png') as f:
         logger.debug(f'Using NTF: {f.name}')
-
-        # TODO: Temp hack to remove DC offset spike
-#         if observation.calibration:
-#             identifier = observation.calibration.identifier
-#         else:
-#             identifier = default_identifier
-#
-#         signal_buffer = signal_buffers[identifier]
-#         if len(signal_buffer.get_data()) > 1:
-#             prevous_values = signal_buffer.get_data()[1]
-#             l = len(values)
-#             center = l // 2
-#             width = 10
-#             values[center-width:center+width] = (
-#                 values[center-width:center+width]
-#                 / (prevous_values[center-width:center+width] * signal_buffer.length)
-#             )
-        # END HACK
 
         title = observation.identifier
         if observation.calibration:
@@ -91,11 +80,23 @@ def plot_to_image(values, freq, observation, buff_percent, y_scale_factor=2):
         title += f' (Buffer {int(buff_percent*100)}%)'
 
         plt.title(title)
-        plt.plot(freq[5:-5], values[5:-5])
+        fig, ax = plt.subplots()
+        ax.plot(freq, values)
         bottom, top = plt.ylim()
         plt.ylim(0, y_scale_factor*max(top, settings.MIN_CHART_Y_SCALE))
         plt.xlabel('Frequency (MHz)')
         plt.ylabel('Relative power (dB)')
+        ax.axvline(observation.frequency / pad, color='red', linestyle="--")
+
+#         def deg2rad(x):
+#             return x * np.pi / 180
+#
+#         def rad2deg(x):
+#             return x * 180 / np.pi
+#
+#         secax = ax.secondary_xaxis('top', functions=(deg2rad, rad2deg))
+#         secax.set_xlabel('Doppler Redshift')
+
         plt.savefig(f.name)
         plt.close()
         f.seek(0)
