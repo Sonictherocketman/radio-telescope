@@ -92,8 +92,9 @@ def register_event_callback(
 @dataclass
 class Light:
     pin: int = None
+    _state = None
 
-    FAST_DELAY = 0.15
+    FAST_DELAY = 0.1
     SLOW_DELAY = 0.3
 
     def __init__(self, pin: int = None):
@@ -107,7 +108,8 @@ class Light:
             logger.debug(f'[GPIO Unavailable] Pin {self.pin} setup.')
         self.off()
 
-    def _flash(self, n=1, delay=FAST_DELAY, end_state=False):
+    def _flash(self, n=1, delay=FAST_DELAY, end_state=None):
+        state = self.get_state()
         for _ in range(0, n):
             self.off()
             time.sleep(delay)
@@ -115,13 +117,15 @@ class Light:
             time.sleep(delay)
             self.off()
             time.sleep(delay)
-        if end_state:
+        if end_state is None:
+            self.restore_state(state)
+        elif end_state:
             self.on()
 
-    def flash_fast(self, n=1, end_state=False):
+    def flash_fast(self, n=1, end_state=None):
         self._flash(n, self.FAST_DELAY, end_state)
 
-    def flash_slow(self, n=1, end_state=False):
+    def flash_slow(self, n=1, end_state=None):
         self._flash(n, self.SLOW_DELAY, end_state)
 
     def flash_ok(self):
@@ -130,7 +134,19 @@ class Light:
     def flash_error(self):
         self.flash_slow(n=3)
 
+    # State
+
+    def get_state(self):
+        return self._state
+
+    def restore_state(self, state):
+        if state:
+            self.on()
+        else:
+            self.off()
+
     def on(self):
+        self._state = True
         if GPIO:
             GPIO.output(self.pin, GPIO.HIGH)
             logger.debug(f'[GPIO Available] Pin {self.pin} on.')
@@ -139,6 +155,7 @@ class Light:
             logger.debug(f'[GPIO Unavailable] Pin {self.pin} on.')
 
     def off(self):
+        self._state = False
         if GPIO:
             GPIO.output(self.pin, GPIO.LOW)
             logger.debug(f'[GPIO Available] Pin {self.pin} off.')

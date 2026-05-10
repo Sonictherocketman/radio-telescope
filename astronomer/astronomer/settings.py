@@ -107,9 +107,12 @@ TRANSMIT_REMOTE_USER = os.environ.get(
     'TRANSMIT_REMOTE_USER',
     'astronomer'
 )
+TRANSMIT_TEST_MODE_ENABLED = True
 TRANSMIT_REMOTE_DIRECTORY = os.environ.get(
     'TRANSMIT_REMOTE_DIRECTORY',
-    '/opt/starsweep.space/data/raw/'
+    './data/test-deploy'
+        if TRANSMIT_TEST_MODE_ENABLED else
+        '/opt/starsweep.space/data/raw/'
 )
 
 

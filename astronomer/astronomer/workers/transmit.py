@@ -73,34 +73,29 @@ def loop(
             logger.error('Found malformed sample. Uploading partial data.')
 
         logger.info(f'Transmitting sample ({identifier}) to remote host...')
-        try:
-            # TODO: Doing these in series is too slow. Glob? Or Threading?
-            with managed_status(event_queue, StatusLight.transmit):
-                with ThreadPoolExecutor() as executor:
-                    # TODO: get true/false + reason and log.
-                    results = executor.map(
-                        api.upload_observation,
-                        associated_files,
-                    )
-                    for result in results:
-                        pass
+        with ThreadPoolExecutor() as executor:
+            results = executor.map(api.upload_observation, associated_files)
+            all_success = all(success for success, _ in results)
+            errors = [e for _, e in results]
 
-        except CalledProcessError as e:
-            # TODO: this needs to move.
-            logger.warning(
-                f'Transmission failure: {path}. '
-                f'Status Code: {e.returncode} '
-                f'Exception thrown during transmision: {e}'
-            )
-            event_queue.put(('light', StatusLight.transmit, 'flash_error'))
-        else:
+        if errors:
+            for e in errors:
+                logger.warning(
+                    f'Transmission failure! Status Code: {e.returncode} '
+                    f'Exception thrown during transmision: {e}'
+                )
+            with managed_status(event_queue, StatusLight.transmit):
+                event_queue.put(('light', StatusLight.transmit, 'flash_error'))
+
+        if all_success:
             for path in associated_files:
                 os.remove(path)
             logger.info('Transmission complete.')
-            event_queue.put(('light', StatusLight.analysis, 'flash_ok'))
+            with managed_status(event_queue, StatusLight.transmit):
+                event_queue.put(('light', StatusLight.analysis, 'flash_ok'))
 
-        # Sleep for a while to not overload the server.
-        time.sleep(random.randint(0, 10))
+        # Sleep for a moment so as not to overload the server [0s, 0.5s].
+        time.sleep(random.randint(0, 5) / 10)
 
 
 def transmit(event_queue):

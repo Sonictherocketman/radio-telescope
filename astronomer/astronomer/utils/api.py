@@ -36,12 +36,26 @@ def upload_observation(
     host=settings.TRANSMIT_REMOTE_HOST,
     user=settings.TRANSMIT_REMOTE_USER,
     target=settings.TRANSMIT_REMOTE_DIRECTORY,
+    test_mode=settings.TRANSMIT_TEST_MODE_ENABLED,
 ):
-    # TODO: Catch exception and return true false or w/e
-    run(
-        f"scp -C '{path}' '{user}@{host}:{target}'",
-        check=True,
-        shell=True,
-        capture_output=True,
-        timeout=timeout,
-    )
+    try:
+        if test_mode:
+            run(
+                f"cp '{path}' '{target}'",
+                check=True,
+                shell=True,
+                capture_output=True,
+                timeout=timeout,
+            )
+        else:
+            run(
+                f"scp -C '{path}' '{user}@{host}:{target}'",
+                check=True,
+                shell=True,
+                capture_output=True,
+                timeout=timeout,
+            )
+    except CalledProcessError as e:
+        return False, e
+    else:
+        return True, None

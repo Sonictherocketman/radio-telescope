@@ -49,7 +49,7 @@ def main():
 
     # Kick off children
 
-    with Manager() as manager, Pool(7, initializer=_configure_logger, initargs=(args.log_level,)) as pool:
+    with Manager() as manager, Pool(5, initializer=_configure_logger, initargs=(args.log_level,)) as pool:
         logger.debug('Configuring shared state...')
         event_queue = manager.Queue()
         should_calibrate = manager.Event()
