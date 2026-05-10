@@ -70,6 +70,9 @@ def plot_to_image(
     buff_percent,
     y_scale_factor=2,
     pad=1e6,
+    # The chart sometimes has spikes at the ends (probably signal artifacts),
+    # we trim those off to preserve the pretty plot.
+    trim_freqs=5,
 ):
     with tempfile.NamedTemporaryFile('wb+', suffix='.png') as f:
         logger.debug(f'Using NTF: {f.name}')
@@ -79,9 +82,9 @@ def plot_to_image(
             title += ' (Calibrated)'
         title += f' (Buffer {int(buff_percent*100)}%)'
 
-        plt.title(title)
         fig, ax = plt.subplots()
-        ax.plot(freq, values)
+        ax.set_title(title)
+        ax.plot(freq[trim_freqs:-trim_freqs], values[trim_freqs:-trim_freqs])
         bottom, top = plt.ylim()
         plt.ylim(0, y_scale_factor*max(top, settings.MIN_CHART_Y_SCALE))
         plt.xlabel('Frequency (MHz)')
