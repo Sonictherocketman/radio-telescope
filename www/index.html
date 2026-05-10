@@ -159,7 +159,9 @@
     <div class="card mb-5" id="config-card">
       <div class="card-header d-flex align-items-center justify-content-between">
         <span><span class="status-dot"></span>Live Configuration</span>
-        <span class="text-muted" style="font-size:0.8rem" id="config-timestamp"></span>
+        <span class="text-muted" style="font-size:0.8rem">
+          <span id="config-timestamp"></span><span id="config-since" style="margin-left:0.5em;color:#484f58"></span>
+        </span>
       </div>
       <div class="card-body">
         <div id="config-error" class="alert alert-warning py-2 mb-3">
@@ -168,9 +170,9 @@
         <div id="config-content">
           <div class="row g-4">
             <!-- Identity -->
-            <div class="col-md-5">
-              <p class="section-label mb-2">Session</p>
-              <table class="table table-borderless config-table mb-0">
+            <div class="col-md-6">
+              <p class="section-label mb-2">Current Observation</p>
+              <table class="table table-borderless table-sm config-table">
                 <tbody>
                   <tr><th>Name</th><td id="cfg-name">&mdash;</td></tr>
                   <tr><th>Device ID</th><td id="cfg-device-id">&mdash;</td></tr>
@@ -179,11 +181,8 @@
                   <tr><th>Observation Window</th><td id="cfg-window">&mdash;</td></tr>
                 </tbody>
               </table>
-            </div>
-            <!-- RF Parameters -->
-            <div class="col-md-4">
-              <p class="section-label mb-2">RF Parameters</p>
-              <table class="table table-borderless config-table mb-0">
+              <p class="section-label mb-2">Configuration</p>
+              <table class="table table-borderless table-sm config-table">
                 <tbody>
                   <tr><th>Frequency</th><td id="cfg-freq">&mdash;</td></tr>
                   <tr><th>Sample Rate</th><td id="cfg-rate">&mdash;</td></tr>
@@ -192,21 +191,35 @@
                   <tr><th>Samples (n)</th><td id="cfg-n">&mdash;</td></tr>
                 </tbody>
               </table>
+              <p class="section-label mb-2">Calibration</p>
+              <div id="cal-details" style="display:none">
+                <table class="table table-borderless table-sm config-table">
+                  <tbody>
+                    <tr><th>Calibration ID</th><td id="cal-id">&mdash;</td></tr>
+                    <tr><th>Timestamp</th><td id="cal-ts">&mdash;</td></tr>
+                    <tr><th>Frequency</th><td id="cal-freq">&mdash;</td></tr>
+                    <tr><th>Gain</th><td id="cal-gain">&mdash;</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <p id="cal-none-msg" class="text-muted mb-0" style="font-size:0.9rem">
+                No calibration data available for this session.
+              </p>
+              <!-- Buffer -->
+              <div class="buffer-bar">
+                <p class="section-label mb-1">Signal Buffer %</p>
+                <div class="d-flex align-items-center gap-2">
+                  <div class="progress flex-grow-1">
+                    <div class="progress-bar bg-info" id="cfg-buffer-bar" role="progressbar" style="width:0%"></div>
+                  </div>
+                  <span id="cfg-buffer-pct" style="font-size:0.8rem;color:#7d8590;white-space:nowrap">0%</span>
+                </div>
+              </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-6">
               <p class="section-label mb-2">Live Data</p>
               <img id="sample-plot" src="/data/latest/sample.png" alt="Latest sample plot"
-                   style="width:100%;height:100%;border-radius:0.25rem;display:block;object-fit:cover" />
-            </div>
-            <!-- Buffer -->
-            <div class="col-12 buffer-bar">
-              <p class="section-label mb-1">Signal Buffer %</p>
-              <div class="d-flex align-items-center gap-2">
-                <div class="progress flex-grow-1">
-                  <div class="progress-bar bg-info" id="cfg-buffer-bar" role="progressbar" style="width:0%"></div>
-                </div>
-                <span id="cfg-buffer-pct" style="font-size:0.8rem;color:#7d8590;white-space:nowrap">0%</span>
-              </div>
+                   style="width:100%;height:100%;border-radius:0.25rem;display:block;object-fit:contain" />
             </div>
           </div>
         </div>
@@ -214,12 +227,8 @@
     </div>
 
     <!-- Latest Sample Plot + Scope Photos -->
-    <div class="section-label">Latest Sample</div>
+    <div class="section-label">Device Photos</div>
     <div class="card mb-5">
-      <div class="card-header d-flex align-items-center justify-content-between">
-        <span><span class="status-dot"></span>Live Plot</span>
-        <span class="text-muted" style="font-size:0.8rem" id="plot-timestamp"></span>
-      </div>
       <div class="card-body p-2">
         <div class="row g-2 align-items-stretch">
           <div class="col-12 col-md-6">
@@ -235,34 +244,6 @@
             <div class="flex-fill" style="min-height:0">
               <img src="./img/scope-shed.png" alt="Scope photo 1" class="scope-photo" />
             </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Calibration -->
-    <div class="row g-4 mb-5">
-      <div class="col-12">
-        <div class="section-label">Calibration</div>
-        <div class="card h-100">
-          <div class="card-header d-flex align-items-center justify-content-between">
-            <span>Calibration Status</span>
-            <span id="cal-badge" class="badge badge-uncalibrated">Not Calibrated</span>
-          </div>
-          <div class="card-body">
-            <div id="cal-details" style="display:none">
-              <table class="table table-borderless config-table mb-0">
-                <tbody>
-                  <tr><th>Calibration ID</th><td id="cal-id">&mdash;</td></tr>
-                  <tr><th>Timestamp</th><td id="cal-ts">&mdash;</td></tr>
-                  <tr><th>Frequency</th><td id="cal-freq">&mdash;</td></tr>
-                  <tr><th>Gain</th><td id="cal-gain">&mdash;</td></tr>
-                </tbody>
-              </table>
-            </div>
-            <p id="cal-none-msg" class="text-muted mb-0" style="font-size:0.9rem">
-              No calibration data available for this session.
-            </p>
           </div>
         </div>
       </div>
@@ -287,19 +268,35 @@
       if (hz >= 1e3) return (hz / 1e3).toFixed(1) + ' kHz';
       return hz + ' Hz';
     }
+    const localTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
     function fmtDate(iso) {
       if (!iso) return '—';
       try {
-        return new Date(iso).toLocaleString(undefined, {
+        const str = new Date(toUTC(iso)).toLocaleString(undefined, {
           year: 'numeric', month: 'short', day: 'numeric',
-          hour: '2-digit', minute: '2-digit', second: '2-digit'
+          hour: '2-digit', minute: '2-digit', second: '2-digit',
+          timeZone: localTZ, timeZoneName: 'short'
         });
+        return str;
       } catch { return iso; }
     }
     function setText(id, val) {
       const el = document.getElementById(id);
       if (el) el.textContent = val ?? '—';
     }
+    function toUTC(iso) {
+      if (!iso) return iso;
+      return /[Z+\-]\d*$/.test(iso) ? iso : iso + 'Z';
+    }
+    function timeSince(iso) {
+      if (!iso) return '';
+      const secs = Math.floor((Date.now() - new Date(toUTC(iso))) / 1000);
+      if (secs < 60)   return '~' + secs + 's ago';
+      if (secs < 3600) return '~' + Math.floor(secs / 60) + 'm ago';
+      if (secs < 86400) return '~' + Math.floor(secs / 3600) + 'h ago';
+      return '~' + Math.floor(secs / 86400) + 'd ago';
+    }
+    let configTimestamp = null;
 
     async function loadConfig() {
       try {
@@ -309,7 +306,7 @@
 
         const attr = d.attributes ?? {};
 
-        setText('cfg-name',      attr.name);
+        setText('cfg-name',      attr.name || 'No current observation set');
         setText('cfg-device-id', attr['device-identifier']);
         setText('cfg-id',        attr.id);
         setText('cfg-location',  attr.location);
@@ -318,6 +315,7 @@
         setText('cfg-bw',        fmtFreq(d.bandwidth));
         setText('cfg-gain',      d.gain != null ? d.gain + ' dB' : '—');
         setText('cfg-n',         d.n != null ? d.n.toLocaleString() : '—');
+        configTimestamp = d.timestamp;
         setText('config-timestamp', fmtDate(d.timestamp));
 
         if (attr.start && attr.end) {
@@ -375,6 +373,10 @@
     refreshPlot();
     setInterval(loadConfig, 30_000);
     setInterval(refreshPlot, 30_000);
+    setInterval(() => {
+      const el = document.getElementById('config-since');
+      if (el) el.textContent = configTimestamp ? timeSince(configTimestamp) : '';
+    }, 1000);
   </script>
 </body>
 </html>
