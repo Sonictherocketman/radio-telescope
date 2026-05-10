@@ -140,7 +140,7 @@ DOWNLINK_STATUS_PIN = int(os.environ.get(
 
 
 class Wait:
-    device = 3
+    device = 5
     processing = 0.5
     background = 5
 
