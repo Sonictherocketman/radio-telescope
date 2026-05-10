@@ -31,7 +31,7 @@ def get_light_handler(name, entry):
     def light_handler():
         while True:
             action = queue.get()
-            logger.info(f'[I/O] Light={name} received action: {action}')
+            logger.debug(f'[I/O] Light={name} received action: {action}')
             process_light(name, action, light)
 
     return light_handler
