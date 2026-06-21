@@ -63,7 +63,7 @@ pymemcache==4.0.0
 pyOpenSSL==24.1.0
 pyparsing==3.1.2
 python-dateutil==2.9.0.post0
-requests==2.31.0
+requests==2.32.2
 s3transfer==0.10.1
 scipy==1.13.1
 service-identity==24.1.0
