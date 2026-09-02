@@ -1,3 +1,4 @@
+bin/BMM150_3-Axis_Magnetometer_Sensor_code/*
 app/rtshare/media/*
 analysis/*
 *.sqlite*

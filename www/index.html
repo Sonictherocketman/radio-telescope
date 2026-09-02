@@ -424,6 +424,18 @@
               <div style="margin-top:0.5rem;font-size:0.72rem;color:#484f58">
                 Samples accumulate while this page is open. New data fetches every 30s.
               </div>
+              <div id="power-plot-label" style="margin-top:0.75rem;font-size:0.75rem;color:#7d8590"></div>
+              <div style="position:relative;margin-top:0.25rem">
+                <img id="power-plot" src="" alt="Latest power plot"
+                     style="width:100%;border-radius:0.25rem;display:block;object-fit:contain" />
+              </div>
+              <div id="power-plot-history-wrap" style="display:none">
+                <div id="power-plot-history-label" style="margin-top:0.75rem;font-size:0.75rem;color:#7d8590"></div>
+                <div style="position:relative;margin-top:0.25rem">
+                  <img id="power-plot-history" src="" alt="Observation power history"
+                       style="width:100%;border-radius:0.25rem;display:block;object-fit:contain" />
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -501,6 +513,7 @@
       return '~' + Math.floor(secs / 86400) + 'd ago';
     }
     let configTimestamp = null;
+    let currentObservationSlug = null;
 
     async function loadConfig() {
       try {
@@ -513,6 +526,15 @@
         setText('cfg-name',      attr.name || 'No current observation set');
         setText('cfg-device-id', attr['device-identifier']);
         setText('cfg-id',        attr.id);
+        currentObservationSlug = attr.id || null;
+        setText('power-plot-label', currentObservationSlug
+          ? 'Total Power — ' + (attr.name || currentObservationSlug)
+          : 'Total Power — Unsorted');
+        const historyWrap = document.getElementById('power-plot-history-wrap');
+        if (historyWrap) historyWrap.style.display = currentObservationSlug ? '' : 'none';
+        if (currentObservationSlug) {
+          setText('power-plot-history-label', 'Total Power History — ' + (attr.name || currentObservationSlug));
+        }
         setText('cfg-location',  attr.location);
         setText('cfg-freq',      fmtFreq(d.frequency));
         setText('cfg-rate',      fmtFreq(d.sample_rate) + '/s');
@@ -660,6 +682,33 @@
       }
     }
 
+    const powerPlotUrls = {};
+    async function fetchImageInto(imgId, path) {
+      try {
+        const res = await fetch('https://starsweep.space/' + path + '?t=' + Date.now());
+        if (!res.ok) return;
+        const blob = await res.blob();
+        const img = document.getElementById(imgId);
+        if (!img) return;
+        const oldUrl = powerPlotUrls[imgId];
+        powerPlotUrls[imgId] = URL.createObjectURL(blob);
+        img.src = powerPlotUrls[imgId];
+        if (oldUrl) URL.revokeObjectURL(oldUrl);
+      } catch (e) {
+        console.error('Power plot fetch failed:', e);
+      }
+    }
+    async function fetchPowerPlot() {
+      const today = new Date().toISOString().slice(0, 10);
+      const path = currentObservationSlug
+        ? `data/observations/${currentObservationSlug}/${today}/power.png`
+        : `data/observations/_unsorted_/${today}/power.png`;
+      await fetchImageInto('power-plot', path);
+      if (currentObservationSlug) {
+        await fetchImageInto('power-plot-history', `data/observations/${currentObservationSlug}/power.png`);
+      }
+    }
+
     let cycleLastTick = Date.now();
     let cycleCurrentInterval = 3000;
     let cycleTimer = null;
@@ -690,9 +739,9 @@
     });
 
 
-    loadConfig();
+    loadConfig().then(fetchPowerPlot);
     fetchAndCachePlot();
-    setInterval(loadConfig,       PLOT_FETCH_MS);
+    setInterval(() => loadConfig().then(fetchPowerPlot), PLOT_FETCH_MS);
     setInterval(fetchAndCachePlot, PLOT_FETCH_MS);
     scheduleCycle();
     setInterval(updateCycleBar, 100);
