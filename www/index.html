@@ -639,7 +639,7 @@
       const content = document.getElementById('upcoming-content');
       if (!section || !content) return;
       try {
-        const res = await fetch('https://starsweep.space/data/latest/configuration.json');
+        const res = await fetch('https://starsweep.space/config/configuration.json');
         if (!res.ok) throw new Error(res.status);
         const d = await res.json();
         const observations = d.observations ?? [];
