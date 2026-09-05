@@ -263,6 +263,7 @@
       width: 45%;
     }
     .config-table td { color: #e6edf3; }
+    .obs-table th { width: 33.333%; }
     .badge-freq {
       background-color: #1f3a5f;
       color: #79c0ff;
@@ -338,7 +339,6 @@
   <div class="container py-5">
 
     <!-- Current Config -->
-    <div class="section-label">Device Status</div>
     <div class="card mb-5" id="config-card">
       <div class="card-header d-flex align-items-center justify-content-between">
         <span><span class="status-dot"></span>Live Configuration</span>
@@ -355,7 +355,7 @@
             <!-- Identity -->
             <div class="col-md-6">
               <p class="section-label mb-2">Current Observation</p>
-              <table class="table table-borderless table-sm config-table">
+              <table class="table table-borderless table-sm config-table obs-table">
                 <tbody>
                   <tr><th>Name</th><td id="cfg-name">&mdash;</td></tr>
                   <tr><th>Device ID</th><td id="cfg-device-id">&mdash;</td></tr>
@@ -365,7 +365,7 @@
                 </tbody>
               </table>
               <p class="section-label mb-2">Configuration</p>
-              <table class="table table-borderless table-sm config-table">
+              <table class="table table-borderless table-sm config-table obs-table">
                 <tbody>
                   <tr><th>Frequency</th><td id="cfg-freq">&mdash;</td></tr>
                   <tr><th>Sample Rate</th><td id="cfg-rate">&mdash;</td></tr>
@@ -376,7 +376,7 @@
               </table>
               <p class="section-label mb-2">Calibration</p>
               <div id="cal-details" style="display:none">
-                <table class="table table-borderless table-sm config-table">
+                <table class="table table-borderless table-sm config-table obs-table">
                   <tbody>
                     <tr><th>Calibration ID</th><td id="cal-id">&mdash;</td></tr>
                     <tr><th>Timestamp</th><td id="cal-ts">&mdash;</td></tr>
@@ -398,9 +398,13 @@
                   <span id="cfg-buffer-pct" style="font-size:0.8rem;color:#7d8590;white-space:nowrap">0%</span>
                 </div>
               </div>
+              <div id="upcoming-section" style="display:none">
+                <hr />
+                <div class="row g-4" id="upcoming-content"></div>
+              </div>
             </div>
             <div class="col-md-6">
-              <p class="section-label mb-2">Live Data</p>
+              <p class="section-label mb-2">Data</p>
               <div style="position:relative">
                 <img id="sample-plot" src="" alt="Latest sample plot"
                      style="width:100%;border-radius:0.25rem;display:block;object-fit:contain" />
@@ -438,16 +442,6 @@
               </div>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Upcoming Observations -->
-    <div id="upcoming-section" style="display:none">
-      <div class="section-label">Upcoming Observations</div>
-      <div class="card mb-5" id="upcoming-card">
-        <div class="card-body">
-          <div class="row g-4" id="upcoming-content"></div>
         </div>
       </div>
     </div>
@@ -598,9 +592,29 @@
       }
     }
 
+    const COMPASS_POINTS = [
+      ['N',  '↑'], ['NE', '↗'], ['E',  '→'], ['SE', '↘'],
+      ['S',  '↓'], ['SW', '↙'], ['W',  '←'], ['NW', '↖'],
+    ];
+    function compassLabel(deg) {
+      const idx = Math.round((((deg % 360) + 360) % 360) / 45) % 8;
+      return COMPASS_POINTS[idx];
+    }
+
+    function appendRow(tbody, label, fillTd) {
+      const tr = document.createElement('tr');
+      const thEl = document.createElement('th');
+      thEl.textContent = label;
+      const tdEl = document.createElement('td');
+      fillTd(tdEl);
+      tr.appendChild(thEl);
+      tr.appendChild(tdEl);
+      tbody.appendChild(tr);
+    }
+
     function renderObservationCard(obs, label) {
       const col = document.createElement('div');
-      col.className = 'col-md-6';
+      col.className = 'col-12';
 
       const labelEl = document.createElement('p');
       labelEl.className = 'section-label mb-2';
@@ -608,27 +622,28 @@
       col.appendChild(labelEl);
 
       const table = document.createElement('table');
-      table.className = 'table table-borderless table-sm config-table';
+      table.className = 'table table-borderless table-sm config-table obs-table';
       const tbody = document.createElement('tbody');
 
-      const rows = [
-        ['Name', obs.name],
-        ['Location', obs.location],
-        ['Window', fmtDate(obs.start) + ' – ' + fmtDate(obs.end)],
-      ];
-      if (obs.azimuth != null)     rows.push(['Azimuth', obs.azimuth + '°']);
-      if (obs.orientation != null) rows.push(['Orientation', obs.orientation + '°']);
+      appendRow(tbody, 'Name',     td => td.textContent = obs.name ?? '—');
+      appendRow(tbody, 'Location', td => td.textContent = obs.location ?? '—');
+      appendRow(tbody, 'Window',   td => td.textContent = fmtDate(obs.start) + ' – ' + fmtDate(obs.end));
 
-      for (const [th, td] of rows) {
-        const tr = document.createElement('tr');
-        const thEl = document.createElement('th');
-        thEl.textContent = th;
-        const tdEl = document.createElement('td');
-        tdEl.textContent = td ?? '—';
-        tr.appendChild(thEl);
-        tr.appendChild(tdEl);
-        tbody.appendChild(tr);
+      if (obs.azimuth != null) {
+        appendRow(tbody, 'Azimuth', td => td.textContent = obs.azimuth + '°');
       }
+      if (obs.orientation != null) {
+        appendRow(tbody, 'Orientation', td => {
+          td.append(obs.orientation + '° ');
+          const [abbr, arrow] = compassLabel(obs.orientation);
+          const muted = document.createElement('span');
+          muted.className = 'text-muted';
+          muted.style.fontSize = '0.85em';
+          muted.textContent = `(${abbr} ${arrow})`;
+          td.appendChild(muted);
+        });
+      }
+
       table.appendChild(tbody);
       col.appendChild(table);
       return col;
