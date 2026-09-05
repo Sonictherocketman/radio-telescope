@@ -442,6 +442,16 @@
       </div>
     </div>
 
+    <!-- Upcoming Observations -->
+    <div id="upcoming-section" style="display:none">
+      <div class="section-label">Upcoming Observations</div>
+      <div class="card mb-5" id="upcoming-card">
+        <div class="card-body">
+          <div class="row g-4" id="upcoming-content"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- Latest Sample Plot + Scope Photos -->
     <div class="section-label">Device Photos</div>
     <div class="card mb-5">
@@ -585,6 +595,75 @@
       } catch (e) {
         document.getElementById('config-error').style.display = 'block';
         console.error('Config fetch failed:', e);
+      }
+    }
+
+    function renderObservationCard(obs, label) {
+      const col = document.createElement('div');
+      col.className = 'col-md-6';
+
+      const labelEl = document.createElement('p');
+      labelEl.className = 'section-label mb-2';
+      labelEl.textContent = label;
+      col.appendChild(labelEl);
+
+      const table = document.createElement('table');
+      table.className = 'table table-borderless table-sm config-table';
+      const tbody = document.createElement('tbody');
+
+      const rows = [
+        ['Name', obs.name],
+        ['Location', obs.location],
+        ['Window', fmtDate(obs.start) + ' – ' + fmtDate(obs.end)],
+      ];
+      if (obs.azimuth != null)     rows.push(['Azimuth', obs.azimuth + '°']);
+      if (obs.orientation != null) rows.push(['Orientation', obs.orientation + '°']);
+
+      for (const [th, td] of rows) {
+        const tr = document.createElement('tr');
+        const thEl = document.createElement('th');
+        thEl.textContent = th;
+        const tdEl = document.createElement('td');
+        tdEl.textContent = td ?? '—';
+        tr.appendChild(thEl);
+        tr.appendChild(tdEl);
+        tbody.appendChild(tr);
+      }
+      table.appendChild(tbody);
+      col.appendChild(table);
+      return col;
+    }
+
+    async function loadObservations() {
+      const section = document.getElementById('upcoming-section');
+      const content = document.getElementById('upcoming-content');
+      if (!section || !content) return;
+      try {
+        const res = await fetch('https://starsweep.space/data/latest/configuration.json');
+        if (!res.ok) throw new Error(res.status);
+        const d = await res.json();
+        const observations = d.observations ?? [];
+
+        const now = Date.now();
+        let current = null;
+        let next = null;
+        for (const obs of observations) {
+          const start = new Date(toUTC(obs.start)).getTime();
+          const end = new Date(toUTC(obs.end)).getTime();
+          if (start <= now && now <= end) {
+            current = obs;
+          } else if (start > now && (!next || start < new Date(toUTC(next.start)).getTime())) {
+            next = obs;
+          }
+        }
+
+        content.innerHTML = '';
+        if (current) content.appendChild(renderObservationCard(current, 'Current Observation'));
+        if (next)    content.appendChild(renderObservationCard(next, 'Next Observation'));
+        section.style.display = (current || next) ? '' : 'none';
+      } catch (e) {
+        section.style.display = 'none';
+        console.error('Observations fetch failed:', e);
       }
     }
 
@@ -741,8 +820,10 @@
 
     loadConfig().then(fetchPowerPlot);
     fetchAndCachePlot();
+    loadObservations();
     setInterval(() => loadConfig().then(fetchPowerPlot), PLOT_FETCH_MS);
     setInterval(fetchAndCachePlot, PLOT_FETCH_MS);
+    setInterval(loadObservations, PLOT_FETCH_MS);
     scheduleCycle();
     setInterval(updateCycleBar, 100);
     setInterval(() => {
